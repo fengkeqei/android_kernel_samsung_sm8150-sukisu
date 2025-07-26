@@ -5165,9 +5165,11 @@ skip_full_check:
 		ret = fixup_bpf_calls(env);
 
 	if (log_level && log_len >= log_size - 1) {
-		BUG_ON(log_len >= log_size);
-		/* verifier log exceeded user supplied buffer */
-		ret = -ENOSPC;
+		/* ANDROID: Do not fail to load if the log buffer passed in
+		 * from userspace is too small (AOSP bpfloader uses fixed
+		 * 16K buffers). Upstream solution: 121664093803 (bpf: Switch
+		 * BPF verifier log to be a rotating log by default).
+		 */
 		/* fall through to return what was recorded */
 	}
 
