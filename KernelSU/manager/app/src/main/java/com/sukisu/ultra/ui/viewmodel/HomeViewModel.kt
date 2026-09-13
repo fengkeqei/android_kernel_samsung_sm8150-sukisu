@@ -14,20 +14,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.sukisu.ultra.BuildConfig
 import com.sukisu.ultra.Natives
+import com.sukisu.ultra.data.repository.SettingsRepository
+import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.getKernelVersion
 import com.sukisu.ultra.ksuApp
 import com.sukisu.ultra.ui.screen.home.HomeUiState
 import com.sukisu.ultra.ui.screen.home.SystemInfo
 import com.sukisu.ultra.ui.screen.home.getManagerVersion
 import com.sukisu.ultra.ui.util.checkNewVersion
-import com.sukisu.ultra.ui.util.getModuleCount
-import com.sukisu.ultra.ui.util.getSuperuserCount
 import com.sukisu.ultra.ui.util.getSELinuxStatusRaw
 import com.sukisu.ultra.ui.util.module.LatestVersionInfo
 import com.sukisu.ultra.ui.util.resolveDeviceName
 import com.sukisu.ultra.ui.util.rootAvailable
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(
+    private val settingsRepo: SettingsRepository = SettingsRepositoryImpl()
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(buildState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -47,10 +49,20 @@ class HomeViewModel : ViewModel() {
         val kernelVersion = getKernelVersion()
         val isManager = Natives.isManager
         val ksuVersion = if (isManager) Natives.version else null
+        val kernelUAPIVersion = if (isManager) Natives.kernelUAPIVersion else null
+        val managerUAPIVersion = Natives.managerUAPIVersion
         val lkmMode = ksuVersion?.let { if (kernelVersion.isGKI()) Natives.isLkmMode else null }
         val isRootAvailable = rootAvailable()
         val managerVersion = getManagerVersion(ksuApp)
         val kernelFullVersion = if (isManager) Natives.getFullVersion() else null
+
+        val zygiskImplementation = if (isManager && isRootAvailable) {
+            com.sukisu.ultra.ui.screen.home.getZygiskImplementation(
+                notInstalledText = ksuApp.getString(com.sukisu.ultra.R.string.home_zygisk_not_installed),
+                disabledText = ksuApp.getString(com.sukisu.ultra.R.string.home_zygisk_disabled),
+                rebootRequiredText = ksuApp.getString(com.sukisu.ultra.R.string.home_zygisk_reboot_required),
+            )
+        } else null
 
         return HomeUiState(
             kernelVersion = kernelVersion,
@@ -60,18 +72,20 @@ class HomeViewModel : ViewModel() {
             isManagerPrBuild = BuildConfig.IS_PR_BUILD,
             isKernelPrBuild = Natives.isPrBuild,
             requiresNewKernel = isManager && Natives.requireNewKernel(),
+            uapiMismatch = isManager && Natives.checkUAPIMismatch(),
+            kernelUAPIVersion = kernelUAPIVersion,
+            managerUAPIVersion = managerUAPIVersion,
             isRootAvailable = isRootAvailable,
             isSafeMode = Natives.isSafeMode,
             isLateLoadMode = Natives.isLateLoadMode,
-            checkUpdateEnabled = ksuApp.getSharedPreferences("settings", Context.MODE_PRIVATE)
-                .getBoolean("check_update", true),
+            checkUpdateEnabled = settingsRepo.checkUpdate,
+            showFullStatus = ksuApp.getSharedPreferences("settings", Context.MODE_PRIVATE)
+                .getBoolean("show_fingerprint", true),
             latestVersionInfo = LatestVersionInfo(),
             currentManagerVersionCode = managerVersion.versionCode,
-            superuserCount = getSuperuserCount(),
-            moduleCount = getModuleCount(),
             systemInfo = SystemInfo(
                 kernelVersion = Os.uname().release,
-                managerVersion = "${managerVersion.versionName} (${managerVersion.versionCode})",
+                managerVersion = "${managerVersion.versionName} (${managerVersion.versionCode}-${managerUAPIVersion})",
                 deviceModel = resolveDeviceName(),
                 kernelFullVersion = kernelFullVersion,
                 fingerprint = Build.FINGERPRINT,
@@ -79,6 +93,7 @@ class HomeViewModel : ViewModel() {
                 seccompStatus = runCatching {
                     Os.prctl(21 /* PR_GET_SECCOMP */, 0, 0, 0, 0)
                 }.getOrDefault(-1),
+                zygiskImplementation = zygiskImplementation,
             ),
         )
     }

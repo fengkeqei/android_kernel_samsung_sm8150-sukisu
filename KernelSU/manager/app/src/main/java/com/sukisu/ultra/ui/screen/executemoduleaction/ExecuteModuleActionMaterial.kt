@@ -22,15 +22,11 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallExtendedFloatingActionButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -50,10 +46,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ui.component.KeyEventBlocker
+import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SnackBarHost
+import com.sukisu.ultra.ui.component.material.TopBarBackButton
+import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 
 @SuppressLint("LocalContextGetResourceValueCall")
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ExecuteModuleActionScreenMaterial(
     state: ExecuteModuleActionUiState,
@@ -87,18 +85,18 @@ fun ExecuteModuleActionScreenMaterial(
 
     BackHandler(enabled = !state.isComplete) { }
 
-    Scaffold(
-        snackbarHost = { SnackBarHost(hostState = snackBarHost, modifier = Modifier.let { if (state.isComplete) it else it.safeDrawingPadding() }) },
+    ExpressiveScaffold(
+        snackbarHost = {
+            SnackBarHost(
+                hostState = snackBarHost,
+                modifier = Modifier.let { if (state.isComplete) it else it.safeDrawingPadding() })
+        },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.action)) },
+                colors = expressiveTopAppBarColors(),
                 navigationIcon = {
-                    IconButton(onClick = actions.onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null
-                        )
-                    }
+                    TopBarBackButton(onClick = actions.onBack)
                 },
                 actions = {
                     IconButton(onClick = actions.onSaveLog) {

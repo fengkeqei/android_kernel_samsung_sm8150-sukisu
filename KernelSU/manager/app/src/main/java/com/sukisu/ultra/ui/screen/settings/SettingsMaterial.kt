@@ -25,15 +25,14 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.RemoveModerator
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.rounded.Android
 import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.UploadFile
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -53,12 +52,15 @@ import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.KsuIsValid
+import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
 import com.sukisu.ultra.ui.component.material.SegmentedDropdownItem
 import com.sukisu.ultra.ui.component.material.SegmentedListItem
 import com.sukisu.ultra.ui.component.material.SegmentedSwitchItem
 import com.sukisu.ultra.ui.component.material.SendLogBottomSheet
 import com.sukisu.ultra.ui.component.material.SnackBarHost
+import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
+import com.sukisu.ultra.ui.util.LocaleHelper
 import com.sukisu.ultra.ui.component.uninstalldialog.UninstallDialog
 
 /**
@@ -83,7 +85,7 @@ fun SettingPagerMaterial(
         onDismissRequest = { showUninstallDialog.value = false }
     )
 
-    Scaffold(
+    ExpressiveScaffold(
         topBar = {
             TopBar(scrollBehavior = scrollBehavior)
         },
@@ -96,10 +98,9 @@ fun SettingPagerMaterial(
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
             KsuIsValid {
                 SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
                     content = listOf(
                         {
                             SegmentedSwitchItem(
@@ -124,7 +125,7 @@ fun SettingPagerMaterial(
             }
 
             SegmentedColumn(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
                 content = buildList {
                     add {
                         SegmentedDropdownItem(
@@ -134,6 +135,21 @@ fun SettingPagerMaterial(
                             items = UiMode.entries.map { it.name },
                             selectedIndex = if (uiState.uiMode == UiMode.Material.value) 1 else 0,
                             onItemSelected = actions.onSetUiModeIndex
+                        )
+                    }
+                    add {
+                        val languageSystemLabel = stringResource(id = R.string.settings_language_system)
+                        val languageTags = remember { listOf(LocaleHelper.SYSTEM) + LocaleHelper.SUPPORTED_TAGS }
+                        val languageNames = remember(languageSystemLabel) {
+                            languageTags.map { if (it.isEmpty()) languageSystemLabel else LocaleHelper.displayName(it) }
+                        }
+                        SegmentedDropdownItem(
+                            icon = Icons.Rounded.Language,
+                            title = stringResource(id = R.string.settings_language),
+                            summary = stringResource(id = R.string.settings_language_summary),
+                            items = languageNames,
+                            selectedIndex = languageTags.indexOf(uiState.appLanguage).coerceAtLeast(0),
+                            onItemSelected = { index -> actions.onSetLanguage(languageTags[index]) }
                         )
                     }
                     add {
@@ -165,7 +181,7 @@ fun SettingPagerMaterial(
             val profileTemplate = stringResource(id = R.string.settings_profile_template)
             KsuIsValid {
                 SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
                     content = listOf {
                         SegmentedListItem(
                             onClick = actions.onOpenProfileTemplate,
@@ -183,7 +199,7 @@ fun SettingPagerMaterial(
                 )
                 val toolsTitle = stringResource(id = R.string.settings_tools)
                 SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
                     content = listOf {
                         SegmentedListItem(
                             onClick = actions.onOpenTools,
@@ -204,7 +220,7 @@ fun SettingPagerMaterial(
             val kpmTitle = stringResource(id = R.string.kpm_title)
             if (isKpmAvailable) {
                 SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
                     content = listOf {
                         SegmentedListItem(
                             onClick = actions.onOpenKpm,
@@ -226,7 +242,7 @@ fun SettingPagerMaterial(
             if (isSusfsSupported) {
                 if (isKpmAvailable) {
                     SegmentedColumn(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
                         content = listOf {
                             SegmentedListItem(
                                 onClick = actions.onOpenSusfsConfig,
@@ -253,7 +269,7 @@ fun SettingPagerMaterial(
                 )
 
                 SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
                     content = listOf(
                         {
                             val suSummary = when (uiState.suCompatStatus) {
@@ -331,11 +347,21 @@ fun SettingPagerMaterial(
                                 onCheckedChange = actions.onSetAdbRootEnabled
                             )
                         },
+                        {
+                            SegmentedSwitchItem(
+                                icon = Icons.Filled.RestartAlt,
+                                title = stringResource(id = R.string.settings_soft_reboot),
+                                summary = stringResource(id = R.string.settings_soft_reboot_summary),
+                                enabled = !uiState.isLateLoadMode,
+                                checked = uiState.isLateLoadMode || uiState.useSoftReboot,
+                                onCheckedChange = actions.onSetUseSoftReboot
+                            )
+                        },
                     )
                 )
 
                 SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
                     content = listOf(
                         {
                             SegmentedSwitchItem(
@@ -371,7 +397,7 @@ fun SettingPagerMaterial(
 
             if (uiState.isLkmMode) {
                 SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
                     content = listOf(
                         {
                             val uninstall = stringResource(id = R.string.settings_uninstall)
@@ -387,7 +413,7 @@ fun SettingPagerMaterial(
             }
 
             SegmentedColumn(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
                 content = listOf(
                     {
                         SegmentedListItem(
@@ -415,6 +441,7 @@ fun SettingPagerMaterial(
                     }
                 )
             )
+
             Spacer(modifier = Modifier.height(8.dp))
 
             if (showBottomSheet) {
@@ -428,17 +455,13 @@ fun SettingPagerMaterial(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     LargeFlexibleTopAppBar(
         title = { Text(stringResource(R.string.settings)) },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surface
-        ),
+        colors = expressiveTopAppBarColors(),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         scrollBehavior = scrollBehavior
     )

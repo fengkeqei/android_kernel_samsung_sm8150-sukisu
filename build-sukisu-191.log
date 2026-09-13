@@ -1,0 +1,93 @@
+[+] Configuring afaneh_beyond1qlte_defconfig
+make: Entering directory '/home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191'
+make[1]: Entering directory '/home/dev/Documents/Workspace/GalaxyS10/out-beyond1qlte-sukisu-191'
+  GEN     ./Makefile
+KCONFIG_VARIANT((null))
+KCONFIG_DEBUG((null))
+#
+# configuration written to .config
+#
+make[1]: Leaving directory '/home/dev/Documents/Workspace/GalaxyS10/out-beyond1qlte-sukisu-191'
+make: Leaving directory '/home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191'
+[+] Building Image-dtb
+make: Entering directory '/home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191'
+make[1]: Entering directory '/home/dev/Documents/Workspace/GalaxyS10/out-beyond1qlte-sukisu-191'
+  GEN     ./Makefile
+scripts/kconfig/conf  --silentoldconfig Kconfig
+  CHK     include/config/kernel.release
+  GEN     ./Makefile
+  CHK     include/generated/uapi/linux/version.h
+  CHK     include/generated/utsrelease.h
+  Using /home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191 as source for kernel
+  CC      scripts/mod/empty.o
+  CC      scripts/mod/devicetable-offsets.s
+  MKELF   scripts/mod/elfconfig.h
+  CHK     scripts/mod/devicetable-offsets.h
+  HOSTCC  scripts/mod/modpost.o
+  HOSTCC  scripts/mod/sumversion.o
+  HOSTCC  scripts/mod/file2alias.o
+/home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191/scripts/mod/modpost.c: 在函数‘match’中:
+/home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191/scripts/mod/modpost.c:811:30: warning: assignment discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  811 |                         here = strstr(sym, bare);
+      |                              ^
+  HOSTLD  scripts/mod/modpost
+  CHK     include/generated/timeconst.h
+  CC      kernel/bounds.s
+  CHK     include/generated/bounds.h
+  CC      arch/arm64/kernel/asm-offsets.s
+  CHK     include/generated/asm-offsets.h
+  CALL    /home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191/scripts/checksyscalls.sh
+  CHK     include/generated/compile.h
+  CHK     kernel/config_data.h
+  CC      fs/eventpoll.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150.dtb
+  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150-v2.dtb
+  CC      techpack/audio/ipc/apr.o
+  CC      techpack/audio/ipc/apr_v2.o
+  CC      techpack/audio/ipc/apr_tal_rpmsg.o
+  CC      techpack/audio/ipc/wcd-dsp-glink.o
+  AR      techpack/audio/ipc/wglink_dlkm.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r07.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r08.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r09.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r11.dtbo
+-- SukiSU-Ultra version: 40900 [v4.2.0-85eb4a95]
+-- KernelSU Manager signature size: 0x35c
+-- KernelSU Manager signature hash: 947ae944f3de4ed4c21a7e4f7953ecf351bfa2b36239da37a34111ad29993eef
+-- KERNEL_VERSION: 4.14
+-- KERNEL_TYPE: Non-GKI
+-- KPM is disabled
+-- KSU_NEW_DCACHE_FLUSH: 0
+  AR      techpack/audio/ipc/apr_dlkm.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r12.dtbo
+  AR      techpack/audio/ipc/built-in.o
+  AR      fs/built-in.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r13.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r14.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r16.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r17.dtbo
+  AR      techpack/audio/built-in.o
+  AR      techpack/built-in.o
+  GEN     .version
+  CHK     include/generated/compile.h
+  AR      built-in.o
+  LD      vmlinux.o
+  MODPOST vmlinux.o
+WARNING: EXPORT symbol "gsi_write_channel_scratch" [vmlinux] version generation failed, symbol will not be versioned.
+  KSYM    .tmp_kallsyms1.o
+  KSYM    .tmp_kallsyms2.o
+  LD      vmlinux
+  SORTEX  vmlinux
+  SYSMAP  System.map
+  FIPS : Generating hmac of crypto and updating vmlinux... 
+HMAC for "crypto" module is: b'0c1c6c95e90dda48e1d42793546ec71455089178f06993e552519196128824f3'
+FIPS integrity procedure has been finished for crypto
+  OBJCOPY arch/arm64/boot/Image
+  DTC     arch/arm64/boot/dts/qcom/sm8150.dtb
+  DTC     arch/arm64/boot/dts/qcom/sm8150-v2.dtb
+echo -n 'UNCOMPRESSED_IMG' > arch/arm64/boot/Image-dtb-hdr && \
+{ dec_size=0; for F in  arch/arm64/boot/Image; do fsize=$(stat -c "%s" "$F"); dec_size=$((dec_size + fsize)); done; printf "%08x\n" $dec_size | sed 's/\(..\)/\1 /g' | { read ch0 ch1 ch2 ch3; for ch in $ch3 $ch2 $ch1 $ch0; do printf "\\$(printf '%03o' $((0x$ch)))"; done; }; } >> arch/arm64/boot/Image-dtb-hdr
+  CAT     arch/arm64/boot/Image-dtb
+make[1]: Leaving directory '/home/dev/Documents/Workspace/GalaxyS10/out-beyond1qlte-sukisu-191'
+make: Leaving directory '/home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191'
+[+] Image-dtb: /home/dev/Documents/Workspace/GalaxyS10/out-beyond1qlte-sukisu-191/arch/arm64/boot/Image-dtb (48105072 bytes)

@@ -4,7 +4,7 @@
     <string name="home_not_installed">Chưa cài đặt</string>
     <string name="home_click_to_install">Nhấn để cài đặt</string>
     <string name="home_working">Đang hoạt động</string>
-    <string name="home_working_version">Phiên bản: %d</string>
+    <string name="home_working_version">Phiên bản: %s</string>
     <string name="home_unsupported">Không được hỗ trợ</string>
     <string name="home_unsupported_reason">KernelSU hiện tại chỉ hỗ trợ Kernel GKI, nhưng bạn có thể patch file .img của thiết bị GKI mà bạn cần.</string>
     <string name="home_version_mismatch">Phiên bản Trình quản lý (%1$d) và phiên bản driver của KernelSU (%2$d) không khớp.</string>
@@ -156,6 +156,11 @@
     <string name="install_only_support_ko_file">Chỉ hỗ trợ các file .ko</string>
     <string name="select_file_tip">Phân vùng image %1$s được khuyến nghị</string>
     <string name="select_kmi">Chọn KMI</string>
+    <string name="download_file">Tải xuống và vá tệp</string>
+    <string name="download_dialog_title">Nhập URL hình ảnh</string>
+    <string name="download_dialog_msg">Hình ảnh OTA đầy đủ hoặc hình ảnh nhà máy</string>
+    <string name="download_no_boot_partition">Không tìm thấy phân vùng boot, init_boot hoặc vendor_boot trong hình ảnh</string>
+    <string name="download_probe_failed">Không thể kiểm tra hình ảnh: %1$s</string>
     <string name="settings_uninstall">Gỡ cài đặt</string>
     <string name="settings_uninstall_temporary">Gỡ cài đặt tạm thời</string>
     <string name="settings_uninstall_permanent">Gỡ cài đặt vĩnh viễn</string>
@@ -261,6 +266,9 @@
     <string name="download">Tải xuống</string>
     <string name="download_cancel">Hủy bỏ</string>
     <string name="download_install">Cài đặt</string>
+    <string name="profile_flags_desc_no_new_privs">Ngăn việc leo thang đặc quyền thêm thông qua KernelSU trong ngữ cảnh của hồ sơ root này.</string>
+    <string name="install_force_backup">Sao lưu thành ảnh gốc</string>
+    <string name="install_force_backup_summary">Vui lòng đảm bảo ảnh boot bạn chọn là ảnh gốc</string>
     <!-- Customize -->
     <string name="hook_type">Chế độ Hook</string>
     <string name="manual_hook">Hook thủ công</string>
@@ -436,6 +444,11 @@
     <string name="susfs_backup_info_date">Ngày sao lưu: %s</string>
     <string name="susfs_backup_info_device">Thiết bị: %s</string>
     <string name="susfs_backup_info_version">Phiên bản: %s</string>
+    <string name="susfs_cmdline_or_bootconfig_title">Giả mạo Cmdline / Bootconfig</string>
+    <string name="susfs_cmdline_or_bootconfig_description">Chọn một tệp văn bản có nội dung sẽ được đẩy vào kernel qua SuSFS thay thế cho /proc/cmdline (không GKI) hoặc /proc/bootconfig (GKI). Sẽ được lưu và áp dụng mỗi lần khởi động khi bật Auto Start.</string>
+    <string name="susfs_cmdline_or_bootconfig_current">Đường dẫn hiện tại: %s</string>
+    <string name="susfs_cmdline_or_bootconfig_none">(chưa chọn)</string>
+    <string name="susfs_cmdline_or_bootconfig_pick_file">Chọn tệp Cmdline / Bootconfig</string>
     <string name="hide_bl_script">Trạng thái Lock BL</string>
     <string name="hide_bl_script_description">Ghi đè thuộc tính trạng thái lock bootloader ở chế độ dịch vụ late_start</string>
     <string name="cleanup_residue">Dọn rác</string>

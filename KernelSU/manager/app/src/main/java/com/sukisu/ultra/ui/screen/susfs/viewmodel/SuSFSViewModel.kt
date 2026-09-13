@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sukisu.ultra.ui.screen.susfs.SuSFSTab
 import com.sukisu.ultra.ui.screen.susfs.SuSFSUiState
-import com.sukisu.ultra.ui.screen.susfs.repository.SuSFSRepository
+import com.sukisu.ultra.ui.screen.susfs.repository.SuSFSRepositoryInterface
 import com.sukisu.ultra.ui.screen.susfs.repository.SuSFSRepositoryImpl
 import com.sukisu.ultra.ui.screen.susfs.util.SuSFSManager
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SuSFSViewModel(
-    private val repo: SuSFSRepository = SuSFSRepositoryImpl()
+    private val repo: SuSFSRepositoryInterface = SuSFSRepositoryImpl()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SuSFSUiState())
@@ -41,7 +41,7 @@ class SuSFSViewModel(
                         isLoading = false,
                         unameValue = config.unameValue,
                         buildTimeValue = config.buildTimeValue,
-                        autoStartEnabled = SuSFSManager.isAutoStartEnabled(context),
+                        autoStartEnabled = SuSFSManager.isAutoStartEnabled(),
                         executeInPostFsData = config.executeInPostFsData,
                         susPaths = config.susPaths,
                         susLoopPaths = config.susLoopPaths,
@@ -52,6 +52,7 @@ class SuSFSViewModel(
                         enableHideBl = config.enableHideBl,
                         enableCleanupResidue = config.enableCleanupResidue,
                         enableAvcLogSpoofing = config.enableAvcLogSpoofing,
+                        cmdlineOrBootconfigPath = config.cmdlineOrBootconfigPath,
                         canEnableAutoStart = canEnableAutoStart
                     )
                 }
@@ -208,44 +209,27 @@ class SuSFSViewModel(
         viewModelScope.launch {
             val current = _uiState.value
             _uiState.update { it.copy(isLoading = true) }
-            val success = withContext(Dispatchers.IO) {
-                SuSFSManager.setUname(
-                    context,
-                    current.unameValue.trim(),
-                    current.buildTimeValue.trim()
-                )
-            }
+            val success = SuSFSManager.setUname(
+                context,
+                current.unameValue.trim(),
+                current.buildTimeValue.trim()
+            )
             if (success) {
-                withContext(Dispatchers.IO) {
-                    SuSFSManager.saveExecuteInPostFsData(context, current.executeInPostFsData)
-                    if (SuSFSManager.isAutoStartEnabled(context)) {
-                        SuSFSManager.configureAutoStart(context, true)
-                    }
+                SuSFSManager.saveExecuteInPostFsData(current.executeInPostFsData)
+                if (SuSFSManager.isAutoStartEnabled()) {
+                    SuSFSManager.configureAutoStart(context, true)
                 }
             }
             _uiState.update { it.copy(isLoading = false) }
+            reloadConfig()
         }
     }
 
-    fun resetAll(context: Context) {
+    fun resetAll() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val success = withContext(Dispatchers.IO) {
-                SuSFSManager.resetToDefault(context)
-            }
-            if (success) {
-                _uiState.update {
-                    it.copy(
-                        unameValue = "default",
-                        buildTimeValue = "default",
-                        autoStartEnabled = false,
-                        isLoading = false,
-                        showConfirmReset = false
-                    )
-                }
-            } else {
-                _uiState.update { it.copy(isLoading = false, showConfirmReset = false) }
-            }
+            _uiState.update { it.copy(isLoading = false, showConfirmReset = false) }
+            reloadConfig()
         }
     }
 
@@ -254,9 +238,7 @@ class SuSFSViewModel(
             val canEnable = _uiState.value.canEnableAutoStart
             if (!canEnable) return@launch
             _uiState.update { it.copy(isLoading = true) }
-            val success = withContext(Dispatchers.IO) {
-                SuSFSManager.configureAutoStart(context, enabled)
-            }
+            val success = SuSFSManager.configureAutoStart(context, enabled)
             _uiState.update {
                 it.copy(
                     isLoading = false,
@@ -267,20 +249,20 @@ class SuSFSViewModel(
     }
 
     fun setEnableHideBl(context: Context, enabled: Boolean) {
-        _uiState.update { it.copy(enableHideBl = enabled) }
-        viewModelScope.launch(Dispatchers.IO) {
-            SuSFSManager.saveEnableHideBl(context, enabled)
-            if (SuSFSManager.isAutoStartEnabled(context)) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(enableHideBl = enabled) }
+            SuSFSManager.saveEnableHideBl(enabled)
+            if (SuSFSManager.isAutoStartEnabled()) {
                 SuSFSManager.configureAutoStart(context, true)
             }
         }
     }
 
     fun setEnableCleanupResidue(context: Context, enabled: Boolean) {
-        _uiState.update { it.copy(enableCleanupResidue = enabled) }
-        viewModelScope.launch(Dispatchers.IO) {
-            SuSFSManager.saveEnableCleanupResidue(context, enabled)
-            if (SuSFSManager.isAutoStartEnabled(context)) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(enableCleanupResidue = enabled) }
+            SuSFSManager.saveEnableCleanupResidue(enabled)
+            if (SuSFSManager.isAutoStartEnabled()) {
                 SuSFSManager.configureAutoStart(context, true)
             }
         }
@@ -316,16 +298,14 @@ class SuSFSViewModel(
         }
     }
 
-    fun reloadConfig(context: Context) {
+    fun reloadConfig() {
         viewModelScope.launch {
-            val config = withContext(Dispatchers.IO) {
-                SuSFSManager.getCurrentModuleConfig(context)
-            }
+            val config = SuSFSManager.getCurrentModuleConfig()
             _uiState.update {
                 it.copy(
                     unameValue = config.unameValue,
                     buildTimeValue = config.buildTimeValue,
-                    autoStartEnabled = SuSFSManager.isAutoStartEnabled(context),
+                    autoStartEnabled = SuSFSManager.isAutoStartEnabled(),
                     executeInPostFsData = config.executeInPostFsData,
                     susPaths = config.susPaths,
                     susLoopPaths = config.susLoopPaths,
@@ -335,8 +315,30 @@ class SuSFSViewModel(
                     hideSusMountsForAllProcs = config.hideSusMountsForAllProcs,
                     enableHideBl = config.enableHideBl,
                     enableCleanupResidue = config.enableCleanupResidue,
-                    enableAvcLogSpoofing = config.enableAvcLogSpoofing
+                    enableAvcLogSpoofing = config.enableAvcLogSpoofing,
+                    cmdlineOrBootconfigPath = config.cmdlineOrBootconfigPath
                 )
+            }
+        }
+    }
+
+    fun applyCmdlineOrBootconfig(context: Context, sourceUri: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, cmdlineOrBootconfigError = null) }
+            val success = withContext(Dispatchers.IO) {
+                SuSFSManager.setCmdlineOrBootconfigFile(context, sourceUri)
+            }
+            if (success) {
+                val path = withContext(Dispatchers.IO) { SuSFSManager.getCmdlineOrBootconfigPath() }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        cmdlineOrBootconfigPath = path,
+                        cmdlineOrBootconfigError = null
+                    )
+                }
+            } else {
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }

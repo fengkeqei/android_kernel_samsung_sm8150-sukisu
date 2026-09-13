@@ -39,8 +39,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -64,6 +66,7 @@ import com.sukisu.ultra.R
 import com.sukisu.ultra.data.model.AppInfo
 import com.sukisu.ultra.ui.component.AppIconImage
 import com.sukisu.ultra.ui.component.ListPopupDefaults
+import com.sukisu.ultra.ui.component.ScrollToTopOnChange
 import com.sukisu.ultra.ui.component.SearchStatus
 import com.sukisu.ultra.ui.component.miuix.SearchBarFake
 import com.sukisu.ultra.ui.component.miuix.SearchBox
@@ -74,13 +77,13 @@ import com.sukisu.ultra.ui.theme.isInDarkTheme
 import com.sukisu.ultra.ui.util.BlurredBar
 import com.sukisu.ultra.ui.util.ownerNameForUid
 import com.sukisu.ultra.ui.util.rememberBlurBackdrop
+import com.sukisu.ultra.ui.viewmodel.AppSortType
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.DropdownImpl
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
-import top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator
 import top.yukonga.miuix.kmp.basic.ListPopupColumn
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.PopupPositionProvider
@@ -147,25 +150,23 @@ fun SuperUserPagerMiuix(
                                     onDismissRequest = { showSortPopup.value = false },
                                     content = {
                                         ListPopupColumn {
-                                            val sortResIds = listOf(
-                                                R.string.sort_by_name,
-                                                R.string.sort_by_package_name,
-                                                R.string.sort_by_install_time,
-                                                R.string.sort_by_update_time,
+                                            val sortEntries = listOf(
+                                                AppSortType.NAME to R.string.sort_by_name,
+                                                AppSortType.PACKAGE_NAME to R.string.sort_by_package_name,
+                                                AppSortType.INSTALL_TIME to R.string.sort_by_install_time,
+                                                AppSortType.UPDATE_TIME to R.string.sort_by_update_time,
                                             )
-                                            val currentSortType = uiState.sortOption / 2
-                                            val isReverse = uiState.sortOption % 2 != 0
-                                            val sortGroupSize = sortResIds.size + 1
+                                            val sortConfig = uiState.sortConfig
+                                            val sortGroupSize = sortEntries.size + 1
 
-                                            sortResIds.forEachIndexed { index, resId ->
+                                            sortEntries.forEachIndexed { index, (type, resId) ->
                                                 DropdownImpl(
                                                     text = stringResource(resId),
                                                     optionSize = sortGroupSize,
-                                                    isSelected = currentSortType == index,
+                                                    isSelected = sortConfig.sortType == type,
                                                     index = index,
                                                     onSelectedIndexChange = {
-                                                        val newOption = index * 2 + (if (isReverse) 1 else 0)
-                                                        actions.onUpdateSortOption(newOption)
+                                                        actions.onUpdateSortConfig(sortConfig.withType(type))
                                                         showSortPopup.value = false
                                                     }
                                                 )
@@ -179,11 +180,10 @@ fun SuperUserPagerMiuix(
                                             DropdownImpl(
                                                 text = stringResource(R.string.sort_reverse),
                                                 optionSize = sortGroupSize,
-                                                isSelected = isReverse,
-                                                index = sortResIds.size,
+                                                isSelected = sortConfig.reversed,
+                                                index = sortEntries.size,
                                                 onSelectedIndexChange = {
-                                                    val newOption = currentSortType * 2 + (if (!isReverse) 1 else 0)
-                                                    actions.onUpdateSortOption(newOption)
+                                                    actions.onUpdateSortConfig(sortConfig.toggleReversed())
                                                     showSortPopup.value = false
                                                 }
                                             )
@@ -380,7 +380,7 @@ fun SuperUserPagerMiuix(
                                         group.apps.forEach { app ->
                                             SimpleAppItem(
                                                 app = app,
-                                                matched = group.matchedPackageNames.contains(app.packageName),
+                                                matched = group.matchedIdentifiers.contains(app.displayIdentifier),
                                             )
                                         }
                                         Spacer(Modifier.height(6.dp))
@@ -400,14 +400,17 @@ fun SuperUserPagerMiuix(
         val layoutDirection = LocalLayoutDirection.current
         searchStatus.SearchBox {
             val lazyListState = rememberLazyListState()
-            val prevRefreshing = remember { booleanArrayOf(false) }
-            if (prevRefreshing[0] && !uiState.isRefreshing) {
-                lazyListState.requestScrollToItem(0)
-            }
-            prevRefreshing[0] = uiState.isRefreshing
-            LaunchedEffect(uiState.sortOption) {
-                lazyListState.scrollToItem(0)
-            }
+            val refreshTick = remember { mutableIntStateOf(0) }
+            val latestGroupedApps = rememberUpdatedState(uiState.groupedApps)
+            val latestRefreshing = rememberUpdatedState(uiState.isRefreshing)
+            ScrollToTopOnChange(
+                lazyListState,
+                uiState.sortConfig,
+                uiState.showSystemApps,
+                uiState.showOnlyPrimaryUserApps,
+                refreshTick.intValue,
+                isBusy = { latestRefreshing.value },
+            ) { latestGroupedApps.value }
             val pullToRefreshState = rememberPullToRefreshState()
             val refreshTexts = listOf(
                 stringResource(R.string.refresh_pulling),
@@ -416,79 +419,66 @@ fun SuperUserPagerMiuix(
                 stringResource(R.string.refresh_complete),
             )
 
-            if (uiState.groupedApps.isEmpty() && !uiState.hasLoaded) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(
-                            top = innerPadding.calculateTopPadding(),
+            val expandedUids = remember { mutableStateOf(setOf<Int>()) }
+            PullToRefresh(
+                isRefreshing = uiState.isRefreshing,
+                pullToRefreshState = pullToRefreshState,
+                onRefresh = {
+                    actions.onRefresh()
+                    refreshTick.intValue++
+                },
+                refreshTexts = refreshTexts,
+                contentPadding = PaddingValues(
+                    top = innerPadding.calculateTopPadding() + 6.dp,
+                    start = innerPadding.calculateStartPadding(layoutDirection),
+                    end = innerPadding.calculateEndPadding(layoutDirection)
+                ),
+            ) {
+                Box(modifier = if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier) {
+                    LazyColumn(
+                        state = lazyListState,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .scrollEndHaptic()
+                            .overScrollVertical()
+                            .nestedScroll(scrollBehavior.nestedScrollConnection),
+                        contentPadding = PaddingValues(
+                            top = innerPadding.calculateTopPadding() + 6.dp,
                             start = innerPadding.calculateStartPadding(layoutDirection),
-                            end = innerPadding.calculateEndPadding(layoutDirection),
-                            bottom = bottomInnerPadding
+                            end = innerPadding.calculateEndPadding(layoutDirection)
                         ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    InfiniteProgressIndicator()
-                }
-            } else {
-                val expandedUids = remember { mutableStateOf(setOf<Int>()) }
-                PullToRefresh(
-                    isRefreshing = uiState.isRefreshing,
-                    pullToRefreshState = pullToRefreshState,
-                    onRefresh = actions.onRefresh,
-                    refreshTexts = refreshTexts,
-                    contentPadding = PaddingValues(
-                        top = innerPadding.calculateTopPadding() + 6.dp,
-                        start = innerPadding.calculateStartPadding(layoutDirection),
-                        end = innerPadding.calculateEndPadding(layoutDirection)
-                    ),
-                ) {
-                    Box(modifier = if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier) {
-                        LazyColumn(
-                            state = lazyListState,
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .scrollEndHaptic()
-                                .overScrollVertical()
-                                .nestedScroll(scrollBehavior.nestedScrollConnection),
-                            contentPadding = PaddingValues(
-                                top = innerPadding.calculateTopPadding() + 6.dp,
-                                start = innerPadding.calculateStartPadding(layoutDirection),
-                                end = innerPadding.calculateEndPadding(layoutDirection)
-                            ),
-                            overscrollEffect = null,
-                        ) {
-                            items(uiState.groupedApps, key = { it.uid }, contentType = { "group" }) { group ->
-                                val expanded = expandedUids.value.contains(group.uid)
-                                Column {
-                                    GroupItem(
-                                        group = group,
-                                        onToggleExpand = {
-                                            if (group.apps.size > 1) {
-                                                expandedUids.value =
-                                                    if (expanded) expandedUids.value - group.uid else expandedUids.value + group.uid
-                                            }
+                        overscrollEffect = null,
+                    ) {
+                        items(uiState.groupedApps, key = { it.uid }, contentType = { "group" }) { group ->
+                            val expanded = expandedUids.value.contains(group.uid)
+                            Column {
+                                GroupItem(
+                                    group = group,
+                                    onToggleExpand = {
+                                        if (group.apps.size > 1) {
+                                            expandedUids.value =
+                                                if (expanded) expandedUids.value - group.uid else expandedUids.value + group.uid
                                         }
-                                    ) {
-                                        actions.onOpenProfile(group)
                                     }
-                                    AnimatedVisibility(
-                                        visible = expanded && group.apps.size > 1,
-                                        enter = expandVertically() + fadeIn(),
-                                        exit = shrinkVertically() + fadeOut()
-                                    ) {
-                                        Column {
-                                            group.apps.forEach { app ->
-                                                SimpleAppItem(app = app)
-                                            }
-                                            Spacer(Modifier.height(6.dp))
+                                ) {
+                                    actions.onOpenProfile(group)
+                                }
+                                AnimatedVisibility(
+                                    visible = expanded && group.apps.size > 1,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    Column {
+                                        group.apps.forEach { app ->
+                                            SimpleAppItem(app = app)
                                         }
+                                        Spacer(Modifier.height(6.dp))
                                     }
                                 }
                             }
-                            item {
-                                Spacer(Modifier.height(bottomInnerPadding))
-                            }
+                        }
+                        item {
+                            Spacer(Modifier.height(bottomInnerPadding))
                         }
                     }
                 }
@@ -518,7 +508,7 @@ private fun SimpleAppItem(
         ) {
             BasicComponent(
                 title = app.label,
-                summary = app.packageName,
+                summary = app.displayIdentifier,
                 startAction = {
                     AppIconImage(
                         packageInfo = app.packageInfo,
@@ -592,7 +582,7 @@ private fun GroupItem(
                     text = if (group.apps.size > 1) {
                         stringResource(R.string.group_contains_apps, group.apps.size)
                     } else {
-                        group.primary.packageName
+                        group.primary.displayIdentifier
                     },
                     modifier = Modifier
                         .basicMarquee(),

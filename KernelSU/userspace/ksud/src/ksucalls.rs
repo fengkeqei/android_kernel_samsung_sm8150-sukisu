@@ -1,4 +1,6 @@
 #![allow(clippy::unreadable_literal)]
+use anyhow::bail;
+
 use crate::ksu_uapi;
 use std::fs;
 use std::os::fd::RawFd;
@@ -62,14 +64,17 @@ pub fn ksuctl<T>(request: u32, arg: *mut T) -> std::io::Result<i32> {
 }
 
 // API implementations
-fn get_info() -> ksu_uapi::ksu_get_info_cmd {
+pub fn get_info() -> ksu_uapi::ksu_get_info_cmd {
     *INFO_CACHE.get_or_init(|| {
         let mut cmd = ksu_uapi::ksu_get_info_cmd {
             version: 0,
             flags: 0,
             features: 0,
+            uapi_version: 0,
         };
-        let _ = ksuctl(ksu_uapi::KSU_IOCTL_GET_INFO, &raw mut cmd);
+        if ksuctl(ksu_uapi::KSU_IOCTL_GET_INFO, &raw mut cmd).is_err() {
+            let _ = ksuctl(ksu_uapi::KSU_IOCTL_GET_INFO_LEGACY, &raw mut cmd);
+        }
         cmd
     })
 }
@@ -80,6 +85,35 @@ pub fn get_version() -> i32 {
 
 pub fn is_late_load() -> bool {
     get_info().flags & ksu_uapi::KSU_GET_INFO_FLAG_LATE_LOAD != 0
+}
+
+pub fn is_lkm() -> bool {
+    get_info().flags & ksu_uapi::KSU_GET_INFO_FLAG_LKM != 0
+}
+
+pub const fn uapi_version() -> u32 {
+    ksu_uapi::KERNEL_SU_UAPI_VERSION
+}
+
+pub fn runtime_mode() -> &'static str {
+    if is_late_load() {
+        "late-load"
+    } else if is_lkm() {
+        "lkm"
+    } else {
+        "built-in"
+    }
+}
+
+pub fn ensure_uapi_version_matched() -> anyhow::Result<()> {
+    let kernel_uapi = get_info().uapi_version;
+    let userspace_uapi = uapi_version();
+    if kernel_uapi != userspace_uapi {
+        bail!(
+            "UAPI version mismatch: kernel={kernel_uapi}, ksud={userspace_uapi}. Please update KernelSU!"
+        );
+    }
+    Ok(())
 }
 
 pub fn grant_root() -> std::io::Result<()> {
@@ -250,6 +284,17 @@ pub fn set_init_pgrp() -> std::io::Result<()> {
     Ok(())
 }
 
+pub fn set_ksu_no_new_privs() -> anyhow::Result<()> {
+    let result = ksuctl(
+        ksu_uapi::KSU_IOCTL_DISABLE_ESCAPE_TO_ROOT,
+        std::ptr::null_mut::<u8>(),
+    )?;
+    if result != 0 {
+        bail!("unexpected result: {result}");
+    }
+    Ok(())
+}
+
 /// List all mount points in umount list
 pub fn umount_list_list() -> anyhow::Result<String> {
     const BUF_SIZE: usize = 4096;
@@ -281,5 +326,23 @@ pub fn set_spoof_version(release: &str, version: &str) -> anyhow::Result<()> {
     cmd.version[..v_len].copy_from_slice(&v_bytes[..v_len]);
 
     ksuctl(ksu_uapi::KSU_IOCTL_SET_SPOOF_VERSION, &raw mut cmd)?;
+    Ok(())
+}
+
+pub fn set_spoof_cpu(
+    cpu_index: u32,
+    midr: u32,
+    bogomips: u32,
+    hwcap: u64,
+    hwcap2: u64,
+) -> anyhow::Result<()> {
+    let mut cmd = ksu_uapi::ksu_set_spoof_cpu_cmd {
+        cpu_index,
+        midr,
+        bogomips,
+        hwcap,
+        hwcap2,
+    };
+    ksuctl(ksu_uapi::KSU_IOCTL_SET_SPOOF_CPU, &raw mut cmd)?;
     Ok(())
 }

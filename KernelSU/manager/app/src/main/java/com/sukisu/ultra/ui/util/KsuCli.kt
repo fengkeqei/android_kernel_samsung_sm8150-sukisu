@@ -24,9 +24,17 @@ import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
 import com.sukisu.ultra.BuildConfig
 import com.sukisu.ultra.Natives
+import com.sukisu.ultra.core.tasks.BootKernelVersion
+import com.sukisu.ultra.core.tasks.ExtractImage
+import com.sukisu.ultra.core.tasks.ProbeResult
+import com.sukisu.ultra.core.utils.DataSourceChannel
 import com.sukisu.ultra.ksuApp
 import org.json.JSONArray
+import okhttp3.OkHttpClient
 import java.io.File
+import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
+import java.util.concurrent.TimeUnit
 
 /**
  * @author weishu
@@ -34,7 +42,7 @@ import java.io.File
  */
 private const val TAG = "KsuCli"
 
-private fun getKsuDaemonPath(): String {
+fun getKsuDaemonPath(): String {
     return ksuApp.applicationInfo.nativeLibraryDir + File.separator + "libksud.so"
 }
 
@@ -97,13 +105,13 @@ fun createRootShell(globalMnt: Boolean = false): Shell {
     }
 }
 
-fun execKsud(args: String, newShell: Boolean = false): Boolean {
+fun execKsud(args: String, newShell: Boolean = false, globalMnt: Boolean = false): Boolean {
     return if (newShell) {
-        withNewRootShell {
+        withNewRootShell(globalMnt = globalMnt) {
             ShellUtils.fastCmdResult(this, "${getKsuDaemonPath()} $args")
         }
     } else {
-        ShellUtils.fastCmdResult(getRootShell(), "${getKsuDaemonPath()} $args")
+        ShellUtils.fastCmdResult(getRootShell(globalMnt), "${getKsuDaemonPath()} $args")
     }
 }
 
@@ -125,7 +133,7 @@ suspend fun getFeaturePersistValue(feature: String): Long? = withContext(Dispatc
 fun install() {
     val start = SystemClock.elapsedRealtime()
     val libadbroot = File(ksuApp.applicationInfo.nativeLibraryDir, "libadbroot.so").absolutePath
-    val result = execKsud("install --libadbroot $libadbroot", true)
+    val result = execKsud("install --libadbroot $libadbroot --data-path ${ksuApp.applicationInfo.deviceProtectedDataDir}", true)
     Log.w(TAG, "install result: $result, cost: ${SystemClock.elapsedRealtime() - start}ms")
 }
 
@@ -269,6 +277,25 @@ sealed class LkmSelection : Parcelable {
     data object KmiNone : LkmSelection()
 }
 
+private fun writeLkmFile(lkm: LkmSelection): File? {
+    if (lkm !is LkmSelection.LkmUri) return null
+    val file = File(ksuApp.cacheDir, "kernelsu-tmp-lkm.ko")
+    ksuApp.contentResolver.openInputStream(lkm.uri)?.use { input ->
+        file.outputStream().use { output -> input.copyTo(output) }
+    }
+    return file
+}
+
+private fun bootPatchFlags(
+    allowShell: Boolean,
+    enableAdb: Boolean,
+    forceBackup: Boolean,
+): String = buildString {
+    if (allowShell) append(" --allow-shell")
+    if (enableAdb) append(" --enable-adbd")
+    if (forceBackup) append(" --backup")
+}
+
 fun installBoot(
     bootUri: Uri?,
     lkm: LkmSelection,
@@ -276,6 +303,7 @@ fun installBoot(
     partition: String?,
     allowShell: Boolean,
     enableAdb: Boolean,
+    forceBackup: Boolean,
     spoofRelease: String,
     spoofVersion: String,
     onStdout: (String) -> Unit,
@@ -302,14 +330,7 @@ fun installBoot(
     } else {
         " -b ${bootFile.absolutePath}"
     }
-
-    if (allowShell) {
-        cmd += " --allow-shell"
-    }
-
-    if (enableAdb) {
-        cmd += " --enable-adbd"
-    }
+    cmd += bootPatchFlags(allowShell, enableAdb, forceBackup)
 
     if (spoofRelease.isNotBlank()) {
         cmd += " --spoof-release ${spoofRelease.shellArg()}"
@@ -323,30 +344,13 @@ fun installBoot(
         cmd += " -u"
     }
 
-    var lkmFile: File? = null
-    when (lkm) {
-        is LkmSelection.LkmUri -> {
-            lkmFile = with(resolver.openInputStream(lkm.uri)) {
-                val file = File(ksuApp.cacheDir, "kernelsu-tmp-lkm.ko")
-                file.outputStream().use { output ->
-                    this?.copyTo(output)
-                }
-
-                file
-            }
-            cmd += " -m ${lkmFile.absolutePath}"
-        }
-
-        is LkmSelection.KmiString -> {
-            cmd += " --kmi ${lkm.value}"
-        }
-
-        LkmSelection.KmiNone -> {
-            // do nothing
-        }
+    val lkmFile = writeLkmFile(lkm)
+    if (lkmFile != null) {
+        cmd += " -m ${lkmFile.absolutePath}"
+    } else if (lkm is LkmSelection.KmiString) {
+        cmd += " --kmi ${lkm.value}"
     }
 
-    // output dir
     if (bootFile != null) {
         val downloadsDir =
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
@@ -371,11 +375,148 @@ fun installBoot(
     return FlashResult(result, showReboot)
 }
 
+fun downloadBoot(
+    url: String,
+    partition: String,
+    lkm: LkmSelection,
+    allowShell: Boolean,
+    enableAdb: Boolean,
+    forceBackup: Boolean,
+    spoofRelease: String,
+    spoofVersion: String,
+    onStdout: (String) -> Unit,
+    onStderr: (String) -> Unit,
+): FlashResult {
+    val bootFile = File(ksuApp.cacheDir, "download-boot.img")
+    var probedKmi: String? = null
+    try {
+        onStdout("- Downloading and extracting boot image")
+        val channel = DataSourceChannel(newDownloadClient(), url)
+        val magic = readMagic(channel)
+        val image = ExtractImage(bootFile, onStdout)
+        // Extract the KMI here while the payload is open. ZipFile closes the
+        // channel it is built on, so probe on a separate channel.
+        val probeChannel = DataSourceChannel(newDownloadClient(), url)
+        probedKmi = try {
+            if (magic == "CrAU") {
+                ExtractImage.probePayload(
+                    probeChannel,
+                    withKmi = lkm is LkmSelection.KmiNone,
+                    onProgress = onStdout,
+                ).kmi
+            } else {
+                ExtractImage.probe(
+                    probeChannel,
+                    withKmi = lkm is LkmSelection.KmiNone,
+                    onProgress = onStdout,
+                ).kmi
+            }
+        } finally {
+            probeChannel.close()
+        }
+        if (magic == "CrAU") {
+            image.consumePayload(channel, partition)
+        } else {
+            image.consume(channel, partition)
+        }
+    } catch (e: Exception) {
+        bootFile.delete()
+        return FlashResult(-1, e.message ?: "Download failed", false)
+    }
+
+    // init_boot/vendor_boot carry no kernel, so their KMI comes from the
+    // payload's boot probe and must be passed explicitly. A remote download
+    // is unrelated to this device, so ksud must not use the local kernel.
+    val autoKmi = if (lkm is LkmSelection.KmiNone) {
+        (probedKmi ?: BootKernelVersion.parseKmiFromBoot(bootFile))?.also {
+            onStdout("- Auto detected KMI: $it")
+        }
+    } else {
+        null
+    }
+    if (autoKmi == null && lkm is LkmSelection.KmiNone) {
+        bootFile.delete()
+        return FlashResult(-1, "Failed to determine KMI from the package", false)
+    }
+
+    var cmd = "${getKsuDaemonPath()} boot-patch -b ${bootFile.absolutePath}"
+    cmd += bootPatchFlags(allowShell, enableAdb, forceBackup)
+
+    if (spoofRelease.isNotBlank()) {
+        cmd += " --spoof-release ${spoofRelease.shellArg()}"
+    }
+
+    if (spoofVersion.isNotBlank()) {
+        cmd += " --spoof-version ${spoofVersion.shellArg()}"
+    }
+
+    val lkmFile = writeLkmFile(lkm)
+    if (lkmFile != null) {
+        cmd += " -m ${lkmFile.absolutePath}"
+    } else if (lkm is LkmSelection.KmiString) {
+        cmd += " --kmi ${lkm.value}"
+    }
+    if (autoKmi != null) cmd += " --kmi $autoKmi"
+    cmd += " --partition $partition"
+    // ksud defaults to cwd, which is read-only in the su session; use Downloads.
+    val downloadsDir =
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+    cmd += " -o $downloadsDir"
+
+    val stdoutCallback: CallbackList<String?> = object : CallbackList<String?>() {
+        override fun onAddElement(s: String?) {
+            onStdout(s ?: "")
+        }
+    }
+    val stderrCallback: CallbackList<String?> = object : CallbackList<String?>() {
+        override fun onAddElement(s: String?) {
+            onStderr(s ?: "")
+        }
+    }
+
+    val result = Shell.getShell().newJob().add(cmd).to(stdoutCallback, stderrCallback).exec()
+    lkmFile?.delete()
+    bootFile.delete()
+    return FlashResult(result, false)
+}
+
+suspend fun probeRemoteBootPartitions(url: String): ProbeResult = withContext(Dispatchers.IO) {
+    Log.d(TAG, "probe start: $url")
+    val channel = DataSourceChannel(newDownloadClient(), url)
+    Log.d(TAG, "probe connected, size=${channel.size()}")
+    val magic = readMagic(channel)
+    Log.d(TAG, "probe magic: $magic")
+    // Only list the partitions here; the KMI is extracted later when the
+    // payload is downloaded for patching.
+    val result = if (magic == "CrAU") {
+        ExtractImage.probePayload(channel, withKmi = false)
+    } else {
+        ExtractImage.probe(channel, withKmi = false)
+    }
+    Log.d(TAG, "probe partitions: ${result.partitions}")
+    result
+}
+
+private fun newDownloadClient(): OkHttpClient {
+    return OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(20, TimeUnit.SECONDS)
+        .writeTimeout(20, TimeUnit.SECONDS)
+        .build()
+}
+
+private fun readMagic(channel: DataSourceChannel): String {
+    val buffer = ByteBuffer.allocate(4)
+    channel.read(buffer)
+    channel.position(0)
+    return String(buffer.array(), StandardCharsets.ISO_8859_1)
+}
+
 private fun String.shellArg(): String = "'${replace("'", "'\\''")}'"
 
 fun reboot(reason: String = "") {
     if (reason == "soft_reboot") {
-        execKsud("soft-reboot", true)
+        execKsud("soft-reboot", true, true)
         return
     }
     val shell = getRootShell()
@@ -486,8 +627,8 @@ fun getAppProfileTemplate(id: String): String {
 
 fun setAppProfileTemplate(id: String, template: String): Boolean {
     val shell = getRootShell()
-    val escapedTemplate = template.replace("\"", "\\\"")
-    val cmd = """${getKsuDaemonPath()} profile set-template "$id" "$escapedTemplate'""""
+    val escapedTemplate = template.replace("'", "'\\''")
+    val cmd = """${getKsuDaemonPath()} profile set-template "$id" '$escapedTemplate'"""
     return shell.newJob().add(cmd)
         .to(ArrayList(), null).exec().isSuccess
 }
@@ -628,6 +769,28 @@ fun spoofKernelUname(release: String, version: String): Boolean {
     val cmd = "${getKsuDaemonPath()} kernel spoof-uname --release ${shellQuote(release)} --version ${shellQuote(version)}"
     val result = ShellUtils.fastCmdResult(shell, cmd)
     Log.i(TAG, "kernel spoof-uname result: $result")
+    return result
+}
+
+fun spoofCpu(
+    cpu: Int,
+    midr: String,
+    bogomips: Int,
+    hwcap: String,
+    hwcap2: String,
+): Boolean {
+    val shell = getRootShell()
+    fun shellQuote(value: String): String = "'${value.replace("'", "'\\''")}'"
+    val cmd = buildString {
+        append("${getKsuDaemonPath()} kernel spoof-cpu")
+        append(" --cpu $cpu")
+        append(" --midr ${shellQuote(midr)}")
+        if (bogomips > 0) append(" --bogomips $bogomips")
+        if (hwcap.isNotBlank()) append(" --hwcap ${shellQuote(hwcap)}")
+        if (hwcap2.isNotBlank()) append(" --hwcap2 ${shellQuote(hwcap2)}")
+    }
+    val result = ShellUtils.fastCmdResult(shell, cmd)
+    Log.i(TAG, "kernel spoof-cpu result: $result")
     return result
 }
 

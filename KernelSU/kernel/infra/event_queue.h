@@ -15,7 +15,6 @@
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 16, 0)
 typedef unsigned int __poll_t;
 #endif
-
 #ifndef EPOLLIN
 #define EPOLLIN POLLIN
 #endif

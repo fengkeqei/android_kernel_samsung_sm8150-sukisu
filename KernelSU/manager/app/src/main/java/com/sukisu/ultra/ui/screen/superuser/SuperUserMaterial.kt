@@ -8,9 +8,11 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -18,25 +20,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.outlined.Article
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -48,9 +46,10 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,42 +60,40 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import com.sukisu.ultra.R
 import com.sukisu.ultra.data.model.AppInfo
 import com.sukisu.ultra.ui.component.AppIconImage
+import com.sukisu.ultra.ui.component.ScrollToTopOnChange
+import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SearchAppBar
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
 import com.sukisu.ultra.ui.component.material.SegmentedItem
 import com.sukisu.ultra.ui.component.material.SegmentedListItem
 import com.sukisu.ultra.ui.component.statustag.StatusTag
 import com.sukisu.ultra.ui.util.ownerNameForUid
+import com.sukisu.ultra.ui.viewmodel.AppSortType
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SuperUserPagerMaterial(
     uiState: SuperUserUiState,
     actions: SuperUserActions,
     bottomInnerPadding: Dp,
 ) {
-    val scope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     val listState = rememberLazyListState()
     val searchListState = rememberLazyListState()
+    val refreshTick = remember { mutableIntStateOf(0) }
     val pullToRefreshState = rememberPullToRefreshState()
 
     var localSearchText by remember { mutableStateOf(uiState.searchStatus.searchText) }
     LaunchedEffect(uiState.searchStatus.searchText) {
         localSearchText = uiState.searchStatus.searchText
     }
-    LaunchedEffect(uiState.sortOption) {
-        listState.scrollToItem(0)
-    }
 
     val haptic = LocalHapticFeedback.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    Scaffold(
+    ExpressiveScaffold(
         topBar = {
             SearchAppBar(
                 snackbarHostState = snackbarHostState,
@@ -105,7 +102,6 @@ fun SuperUserPagerMaterial(
                 onSearchTextChange = {
                     localSearchText = it
                     actions.onSearchTextChange(it)
-                    scope.launch { listState.scrollToItem(0) }
                 },
                 onClearClick = {
                     localSearchText = ""
@@ -128,49 +124,67 @@ fun SuperUserPagerMaterial(
                             contentDescription = stringResource(R.string.menu_sort)
                         )
 
-                        DropdownMenu(
+                        DropdownMenuPopup(
                             expanded = showSortMenu,
                             onDismissRequest = { showSortMenu = false }
                         ) {
-                            val sortResIds = listOf(
-                                R.string.sort_by_name,
-                                R.string.sort_by_package_name,
-                                R.string.sort_by_install_time,
-                                R.string.sort_by_update_time,
+                            val sortEntries = listOf(
+                                AppSortType.NAME to R.string.sort_by_name,
+                                AppSortType.PACKAGE_NAME to R.string.sort_by_package_name,
+                                AppSortType.INSTALL_TIME to R.string.sort_by_install_time,
+                                AppSortType.UPDATE_TIME to R.string.sort_by_update_time,
                             )
-                            val currentSortType = uiState.sortOption / 2
-                            val isReverse = uiState.sortOption % 2 != 0
+                            val sortConfig = uiState.sortConfig
 
-                            sortResIds.forEachIndexed { index, resId ->
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(resId)) },
-                                    trailingIcon = {
-                                        RadioButton(
-                                            selected = currentSortType == index,
-                                            onClick = null,
-                                        )
-                                    },
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                        val newOption = index * 2 + (if (isReverse) 1 else 0)
-                                        actions.onUpdateSortOption(newOption)
-                                        showSortMenu = false
-                                    }
-                                )
+                            DropdownMenuGroup(shapes = MenuDefaults.groupShape(index = 0, count = 2)) {
+                                sortEntries.onEachIndexed { index, (type, resId) ->
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(resId)) },
+                                        selected = sortConfig.sortType == type,
+                                        selectedLeadingIcon = {
+                                            Icon(
+                                                Icons.Filled.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(MenuDefaults.LeadingIconSize),
+                                            )
+                                        },
+                                        onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                            actions.onUpdateSortConfig(sortConfig.withType(type))
+                                            showSortMenu = false
+                                        },
+                                        shapes = MenuDefaults.itemShape(
+                                            index = index,
+                                            count = sortEntries.size
+                                        ),
+                                    )
+                                }
                             }
 
-                            HorizontalDivider()
+                            Spacer(Modifier.height(MenuDefaults.GroupSpacing))
 
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.sort_reverse)) },
-                                trailingIcon = { Checkbox(isReverse, null) },
-                                onClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    val newOption = currentSortType * 2 + (if (!isReverse) 1 else 0)
-                                    actions.onUpdateSortOption(newOption)
-                                    showSortMenu = false
-                                }
-                            )
+                            DropdownMenuGroup(shapes = MenuDefaults.groupShape(index = 1, count = 2)) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.sort_reverse)) },
+                                    checked = sortConfig.reversed,
+                                    checkedLeadingIcon = {
+                                        Icon(
+                                            Icons.Filled.Check,
+                                            modifier = Modifier.size(MenuDefaults.LeadingIconSize),
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    onCheckedChange = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                        actions.onUpdateSortConfig(sortConfig.toggleReversed())
+                                        showSortMenu = false
+                                    },
+                                    shapes = MenuDefaults.itemShape(
+                                        index = 0,
+                                        count = 1
+                                    ),
+                                )
+                            }
                         }
                     }
 
@@ -182,29 +196,48 @@ fun SuperUserPagerMaterial(
                             contentDescription = stringResource(id = R.string.settings)
                         )
 
-                        DropdownMenu(
+                        DropdownMenuPopup(
                             expanded = showDropdown,
                             onDismissRequest = { showDropdown = false }
                         ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.show_system_apps)) },
-                                trailingIcon = { Checkbox(uiState.showSystemApps, null) },
-                                onClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    actions.onToggleShowSystemApps()
-                                    showDropdown = false
-                                }
-                            )
-                            if (uiState.userIds.size > 1) {
+                            val filterCount = if (uiState.userIds.size > 1) 2 else 1
+                            DropdownMenuGroup(shapes = MenuDefaults.groupShapes()) {
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.show_only_primary_user_apps)) },
-                                    trailingIcon = { Checkbox(uiState.showOnlyPrimaryUserApps, null) },
-                                    onClick = {
+                                    text = { Text(stringResource(R.string.show_system_apps)) },
+                                    checked = uiState.showSystemApps,
+                                    checkedLeadingIcon = {
+                                        Icon(
+                                            Icons.Filled.Check,
+                                            modifier = Modifier.size(MenuDefaults.LeadingIconSize),
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    onCheckedChange = {
                                         haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                        actions.onToggleShowOnlyPrimaryUserApps()
+                                        actions.onToggleShowSystemApps()
                                         showDropdown = false
-                                    }
+                                    },
+                                    shapes = MenuDefaults.itemShape(index = 0, count = filterCount),
                                 )
+                                if (uiState.userIds.size > 1) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.show_only_primary_user_apps)) },
+                                        checked = uiState.showOnlyPrimaryUserApps,
+                                        checkedLeadingIcon = {
+                                            Icon(
+                                                Icons.Filled.Check,
+                                                modifier = Modifier.size(MenuDefaults.LeadingIconSize),
+                                                contentDescription = null,
+                                            )
+                                        },
+                                        onCheckedChange = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                            actions.onToggleShowOnlyPrimaryUserApps()
+                                            showDropdown = false
+                                        },
+                                        shapes = MenuDefaults.itemShape(index = 1, count = filterCount),
+                                    )
+                                }
                             }
                         }
                     }
@@ -223,7 +256,6 @@ fun SuperUserPagerMaterial(
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
-                            top = 8.dp,
                             bottom = 16.dp + bottomPadding
                         ),
                     ) {
@@ -258,7 +290,7 @@ fun SuperUserPagerMaterial(
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
-                            top = 8.dp,
+                            top = 0.dp,
                             bottom = 16.dp + bottomPadding
                         ),
                     ) {
@@ -285,6 +317,7 @@ fun SuperUserPagerMaterial(
             onRefresh = {
                 haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                 actions.onRefresh()
+                refreshTick.intValue++
             },
             state = pullToRefreshState,
             indicator = {
@@ -297,6 +330,17 @@ fun SuperUserPagerMaterial(
         ) {
             val expandedSearchUids = remember { mutableStateOf(setOf<Int>()) }
 
+            val latestGroupedApps = rememberUpdatedState(uiState.groupedApps)
+            val latestRefreshing = rememberUpdatedState(uiState.isRefreshing)
+            ScrollToTopOnChange(
+                listState,
+                uiState.sortConfig,
+                uiState.showSystemApps,
+                uiState.showOnlyPrimaryUserApps,
+                refreshTick.intValue,
+                isBusy = { latestRefreshing.value },
+            ) { latestGroupedApps.value }
+
             LazyColumn(
                 state = listState,
                 modifier = Modifier
@@ -306,7 +350,7 @@ fun SuperUserPagerMaterial(
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
-                    top = 8.dp,
+                    top = 0.dp,
                     bottom = 16.dp + bottomInnerPadding
                 ),
             ) {
@@ -375,7 +419,7 @@ private fun SearchGroupItem(
                 group.apps.forEach { app ->
                     SimpleAppItem(
                         app = app,
-                        matched = group.matchedPackageNames.contains(app.packageName),
+                        matched = group.matchedIdentifiers.contains(app.displayIdentifier),
                     ) {
                         closeSearch()
                         onOpenProfile(group)
@@ -386,7 +430,6 @@ private fun SearchGroupItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SimpleAppItem(
     app: AppInfo,
@@ -396,7 +439,6 @@ private fun SimpleAppItem(
     ListItem(
         onClick = onNavigate,
         modifier = Modifier.padding(horizontal = 4.dp),
-        shapes = ListItemDefaults.shapes(shape = RoundedCornerShape(0.dp)),
         colors = ListItemDefaults.colors(
             containerColor = if (matched) {
                 colorScheme.secondaryContainer
@@ -405,7 +447,7 @@ private fun SimpleAppItem(
             }
         ),
         content = { Text(app.label, overflow = TextOverflow.Ellipsis, maxLines = 1) },
-        supportingContent = { Text(app.packageName, overflow = TextOverflow.Ellipsis, maxLines = 1) },
+        supportingContent = { Text(app.displayIdentifier, overflow = TextOverflow.Ellipsis, maxLines = 1) },
         leadingContent = {
             AppIconImage(
                 packageInfo = app.packageInfo,
@@ -434,8 +476,8 @@ private fun GroupItem(
 ) {
     val bg = colorScheme.primary
     val fg = colorScheme.onPrimary
-    val umountBg = colorScheme.secondary
-    val umountFg = colorScheme.onSecondary
+    val umountBg = colorScheme.tertiaryContainer
+    val umountFg = colorScheme.onTertiaryContainer
     val customBg = colorScheme.secondaryContainer
     val customFg = colorScheme.onSecondaryContainer
     val otherBg = colorScheme.tertiary
@@ -453,7 +495,7 @@ private fun GroupItem(
     val summaryText = if (group.apps.size > 1) {
         stringResource(R.string.group_contains_apps, group.apps.size)
     } else {
-        group.primary.packageName
+        group.primary.displayIdentifier
     }
     SegmentedListItem(
         selected = selected,
@@ -469,7 +511,7 @@ private fun GroupItem(
         supportingContent = {
             Text(
                 text = summaryText,
-                color = colorScheme.outline,
+                color = colorScheme.onSurfaceVariant,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1
             )

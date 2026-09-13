@@ -4,7 +4,8 @@
     <string name="home_not_installed">Не установлен</string>
     <string name="home_click_to_install">Нажмите, чтобы установить</string>
     <string name="home_working">Работает</string>
-    <string name="home_working_version">Версия: %d</string>
+    <string name="home_working_version">Версия: %s</string>
+    <!--Don't translate this string!-->
     <string name="home_unsupported">Не поддерживается</string>
     <string name="home_unsupported_reason">Теперь KernelSU поддерживает только ядра GKI, однако вы всё ещё можете пропатчить образ для GKI-устройств.</string>
     <string name="home_version_mismatch">Версия менеджера (%1$d) и драйвера KernelSU (%2$d) отличаются!</string>
@@ -148,6 +149,11 @@
     <string name="direct_install">Прямая установка (Рекомендуется)</string>
     <string name="select_file">Выбрать файл</string>
     <string name="install_inactive_slot">Установка в неактивный слот (После OTA)</string>
+    <string name="download_file">Скачать файл и пропатчить</string>
+    <string name="download_dialog_title">Введите URL образа</string>
+    <string name="download_dialog_msg">Полный OTA-образ или заводской образ</string>
+    <string name="download_no_boot_partition">В образе не найдены разделы boot, init_boot или vendor_boot</string>
+    <string name="download_probe_failed">Не удалось проверить образ: %1$s</string>
     <string name="install_inactive_slot_warning">Ваше устройство будет **ПРИНУДИТЕЛЬНО** загружено в текущий неактивный слот после перезагрузки!
 \n Используйте эту опцию только после завершения OTA.
 \n Продолжить?</string>
@@ -214,13 +220,6 @@
     <string name="color_teal">Бирюзовый</string>
     <string name="color_pink">Розовый</string>
     <string name="color_brown">Коричневый</string>
-    <string name="color_deep_purple">Тёмно-фиолетовый</string>
-    <string name="color_indigo">Индиго</string>
-    <string name="color_cyan">Циан</string>
-    <string name="color_yellow">Желтый</string>
-    <string name="color_amber">Янтарный</string>
-    <string name="color_blue_grey">Серо-голубой</string>
-    <string name="color_sakura">Сакура</string>
     <string name="network_offline">Нет подключения к сети</string>
     <string name="network_retry">Повторить</string>
     <string name="tab_readme">README</string>
@@ -241,6 +240,16 @@
     <string name="select_file_tip_nogki">Пожалуйста, выберите файл образа GKI устройства, который вы хотите пропатчить</string>
     <string name="current_kmi">Версия KMI этого устройства: %s</string>
     <string name="current_device_kmi">KMI этого устройства</string>
+    <string name="color_deep_purple">Тёмно-фиолетовый</string>
+    <string name="color_indigo">Индиго</string>
+    <string name="color_cyan">Циан</string>
+    <string name="color_yellow">Желтый</string>
+    <string name="color_amber">Янтарный</string>
+    <string name="color_blue_grey">Серо-голубой</string>
+    <string name="color_sakura">Сакура</string>
+    <string name="profile_flags_desc_no_new_privs">Предотвращает дальнейшее повышение привилегий через KernelSU в контексте этого root-профиля.</string>
+    <string name="install_force_backup">Сохранить резервную копию как оригинальный образ</string>
+    <string name="install_force_backup_summary">Пожалуйста, убедитесь, что выбранный образ boot является оригинальным образом</string>
     <string name="settings_enable_blur">Размытие</string>
     <string name="settings_enable_blur_summary">Включить эффект размытия для верхних и нижних панелей.</string>
     <string name="settings_floating_bottom_bar">Плавающая нижняя панель</string>
@@ -506,6 +515,11 @@
     <string name="susfs_backup_info_date">Дата резервного копирования: %s</string>
     <string name="susfs_backup_info_device">Устройство: %s</string>
     <string name="susfs_backup_info_version">Версия: %s</string>
+    <string name="susfs_cmdline_or_bootconfig_title">Подмена Cmdline / Bootconfig</string>
+    <string name="susfs_cmdline_or_bootconfig_description">Выберите текстовый файл, содержимое которого будет передано в ядро через SuSFS вместо /proc/cmdline (не GKI) или /proc/bootconfig (GKI). При включённом автозапуске применяется после каждой перезагрузки.</string>
+    <string name="susfs_cmdline_or_bootconfig_current">Текущий путь: %s</string>
+    <string name="susfs_cmdline_or_bootconfig_none">(не выбрано)</string>
+    <string name="susfs_cmdline_or_bootconfig_pick_file">Выбрать файл Cmdline / Bootconfig</string>
     <string name="hide_bl_script">Состояние блокировки</string>
     <string name="hide_bl_script_description">Переопределить статус блокировки загрузчика в режиме службы late_start</string>
     <string name="cleanup_residue">Очистка</string>

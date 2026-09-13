@@ -15,7 +15,6 @@
 #endif
 
 #include "feature/kernel_umount.h"
-#include "compat/kernel_compat.h"
 #include "klog.h" // IWYU pragma: keep
 #include "policy/allowlist.h"
 #include "selinux/selinux.h"
@@ -46,36 +45,27 @@ static const struct ksu_feature_handler kernel_umount_handler = {
     .set_handler = kernel_umount_feature_set,
 };
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0) || defined(KSU_HAS_PATH_UMOUNT)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
 extern int path_umount(struct path *path, int flags);
+
 static void ksu_umount_mnt(const char *mnt, struct path *path, int flags)
 {
     int err = path_umount(path, flags);
-    if (err) {
+
+    if (err)
         pr_info("umount %s failed: %d\n", mnt, err);
-    }
 }
 #else
-static void ksu_sys_umount(const char *mnt, int flags)
+static void ksu_umount_mnt(const char *mnt, struct path *path, int flags)
 {
-    char __user *usermnt = (char __user *)mnt;
     mm_segment_t old_fs;
 
+    path_put(path);
     old_fs = get_fs();
     set_fs(KERNEL_DS);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
-    ksys_umount(usermnt, flags);
-#else
-    sys_umount(usermnt, flags);
-#endif
+    sys_umount((char __user *)mnt, flags);
     set_fs(old_fs);
 }
-
-#define ksu_umount_mnt(mnt, path, flags) \
-    ({                                   \
-        path_put(path);                  \
-        ksu_sys_umount(mnt, flags);      \
-    })
 #endif
 
 static void try_umount(const char *mnt, int flags)
@@ -110,18 +100,14 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
         return 0;
     }
 
-    if (!ksu_cred) {
-        return 0;
-    }
-
     // There are 6 scenarios:
     // 1. Normal app: zygote -> appuid
     // 2. Isolated process forked from zygote: zygote -> isolated_process
     // 3. App zygote forked from zygote: zygote -> appuid
-    // 4. Webview zygote forked from zygote: zygote -> WEBVIEW_ZYGOTE_UID (no need to handle, app cannot run custom code)
+    // 4. Webview zygote forked from zygote: zygote -> webview_zygote
     // 5. Isolated process forked from app zygote: appuid -> isolated_process (already handled by 3)
-    // 6. Isolated process forked from webview zygote (no need to handle, app cannot run custom code)
-    if (!is_appuid(new_uid) && !is_isolated_process(new_uid)) {
+    // 6. Isolated process forked from webview zygote (already handled by 4)
+    if (!is_appuid(new_uid) && new_uid != WEBVIEW_ZYGOTE_UID && !is_isolated_process(new_uid)) {
         return 0;
     }
 

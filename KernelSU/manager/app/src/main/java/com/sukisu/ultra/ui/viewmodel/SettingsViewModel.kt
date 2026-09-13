@@ -19,6 +19,7 @@ import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.ksuApp
 import com.sukisu.ultra.ui.screen.settings.SettingsUiState
 import com.sukisu.ultra.ui.theme.ColorMode
+import com.sukisu.ultra.ui.util.findActivity
 
 class SettingsViewModel(
     private val repo: SettingsRepository = SettingsRepositoryImpl()
@@ -43,8 +44,10 @@ class SettingsViewModel(
             val enableBlur = repo.enableBlur
             val enableFloatingBottomBar = repo.enableFloatingBottomBar
             val enableFloatingBottomBarBlur = repo.enableFloatingBottomBarBlur
+            val enableNavigationBadge = repo.enableNavigationBadge
             val pageScale = repo.pageScale
             val enableWebDebugging = repo.enableWebDebugging
+            val showFullStatus = repo.showFullStatus
             val colorStyle = repo.colorStyle
             val colorSpec = repo.colorSpec
             val isLkmMode = repo.isLkmMode()
@@ -66,12 +69,15 @@ class SettingsViewModel(
             val isAdbRootEnabled = repo.getAdbRootPersistValue() == 1L
             val isDefaultUmountModules = repo.isDefaultUmountModules()
             val uiMode = repo.uiMode
+            val appLanguage = repo.appLanguage
             val autoJailbreak = repo.autoJailbreak
+            val useSoftReboot = repo.useSoftReboot
             val isLateLoadMode = Natives.isLateLoadMode
 
             _uiState.update {
                 it.copy(
                     uiMode = uiMode,
+                    appLanguage = appLanguage,
                     checkUpdate = checkUpdate,
                     checkModuleUpdate = checkModuleUpdate,
                     alternativeIcon = alternativeIcon,
@@ -82,8 +88,10 @@ class SettingsViewModel(
                     enableBlur = enableBlur,
                     enableFloatingBottomBar = enableFloatingBottomBar,
                     enableFloatingBottomBarBlur = enableFloatingBottomBarBlur,
+                    enableNavigationBadge = enableNavigationBadge,
                     pageScale = pageScale,
                     enableWebDebugging = enableWebDebugging,
+                    showFullStatus = showFullStatus,
                     colorStyle = colorStyle,
                     colorSpec = colorSpec,
                     suCompatStatus = suCompatStatus,
@@ -100,6 +108,7 @@ class SettingsViewModel(
                     isDefaultUmountModules = isDefaultUmountModules,
                     isLkmMode = isLkmMode,
                     autoJailbreak = autoJailbreak,
+                    useSoftReboot = useSoftReboot,
                     isLateLoadMode = isLateLoadMode,
                 )
             }
@@ -139,6 +148,15 @@ class SettingsViewModel(
         repo.uiMode = mode
         repo.themeMode = newThemeMode
         _uiState.update { it.copy(uiMode = mode, themeMode = newThemeMode) }
+    }
+
+    fun setLanguage(context: Context, tag: String) {
+        if (repo.appLanguage == tag) return
+        repo.appLanguage = tag
+        _uiState.update { it.copy(appLanguage = tag) }
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
+            context.findActivity()?.recreate()
+        }
     }
 
     fun setCheckModuleUpdate(enabled: Boolean) {
@@ -215,6 +233,11 @@ class SettingsViewModel(
         _uiState.update { it.copy(enableFloatingBottomBarBlur = enabled) }
     }
 
+    fun setEnableNavigationBadge(enabled: Boolean) {
+        repo.enableNavigationBadge = enabled
+        _uiState.update { it.copy(enableNavigationBadge = enabled) }
+    }
+
     fun setPageScale(scale: Float) {
         repo.pageScale = scale
         _uiState.update { it.copy(pageScale = scale) }
@@ -223,6 +246,11 @@ class SettingsViewModel(
     fun setEnableWebDebugging(enabled: Boolean) {
         repo.enableWebDebugging = enabled
         _uiState.update { it.copy(enableWebDebugging = enabled) }
+    }
+
+    fun setShowFullStatus(enabled: Boolean) {
+        repo.showFullStatus = enabled
+        _uiState.update { it.copy(showFullStatus = enabled) }
     }
 
     fun setSuCompatMode(mode: Int) {
@@ -288,6 +316,11 @@ class SettingsViewModel(
     fun setAutoJailbreak(enabled: Boolean) {
         repo.autoJailbreak = enabled
         _uiState.update { it.copy(autoJailbreak = enabled) }
+    }
+
+    fun setUseSoftReboot(enabled: Boolean) {
+        repo.useSoftReboot = enabled
+        _uiState.update { it.copy(useSoftReboot = enabled) }
     }
 
     fun setSulogEnabled(enabled: Boolean) {

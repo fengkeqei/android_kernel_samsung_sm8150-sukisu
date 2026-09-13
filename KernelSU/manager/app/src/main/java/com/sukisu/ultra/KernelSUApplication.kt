@@ -8,6 +8,7 @@ import android.system.Os
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
+import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.ui.viewmodel.SuperUserViewModel
 import okhttp3.Cache
 import okhttp3.OkHttpClient
@@ -33,6 +34,10 @@ class KernelSUApplication : Application(), ViewModelStoreOwner {
     lateinit var okhttpClient: OkHttpClient
     private val appViewModelStore by lazy { ViewModelStore() }
 
+    override fun attachBaseContext(base: android.content.Context) {
+        super.attachBaseContext(com.sukisu.ultra.ui.util.LocaleHelper.wrap(base))
+    }
+
     private fun isUserUnlocked(): Boolean =
         getSystemService(UserManager::class.java)?.isUserUnlocked == true
 
@@ -45,8 +50,7 @@ class KernelSUApplication : Application(), ViewModelStoreOwner {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            val prefs = this.getSharedPreferences("settings", MODE_PRIVATE)
-            val enable = prefs.getBoolean("enable_predictive_back", false)
+            val enable = SettingsRepositoryImpl().enablePredictiveBack
             HiddenApiBypass.addHiddenApiExemptions("Landroid/content/pm/ApplicationInfo;->setEnableOnBackInvokedCallback")
             setEnableOnBackInvokedCallback(applicationInfo, enable)
         }

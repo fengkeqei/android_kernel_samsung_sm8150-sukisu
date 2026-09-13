@@ -2,6 +2,7 @@
 #define __KSU_H_KERNEL_COMPAT
 
 #include <linux/fs.h>
+#include <linux/task_work.h>
 #include <linux/uaccess.h>
 #include <linux/version.h>
 
@@ -28,7 +29,6 @@ static inline long ksu_copy_from_user_nofault(void *to,
         pagefault_enable();
     }
     set_fs(old_fs);
-
     return ret ? -EFAULT : 0;
 }
 
@@ -45,7 +45,6 @@ static inline long ksu_copy_to_user_nofault(void __user *to, const void *from,
         pagefault_enable();
     }
     set_fs(old_fs);
-
     return ret ? -EFAULT : 0;
 }
 
@@ -65,21 +64,18 @@ static inline long ksu_strncpy_from_user_nofault(char *dst,
 
     if (unlikely(count <= 0))
         return 0;
-
     old_fs = get_fs();
     set_fs(USER_DS);
     pagefault_disable();
     ret = strncpy_from_user(dst, src, count);
     pagefault_enable();
     set_fs(old_fs);
-
     if (ret >= count) {
         ret = count;
         dst[ret - 1] = '\0';
     } else if (ret > 0) {
         ret++;
     }
-
     return ret;
 }
 
@@ -89,21 +85,39 @@ static inline long ksu_strncpy_from_user_nofault(char *dst,
 #define strncpy_from_user_nofault ksu_strncpy_from_user_nofault
 #endif
 
-/*
- * ksu_copy_from_user_retry
- * try nofault copy first, if it fails, try with plain
- * paramters are the same as copy_from_user
- * 0 = success
- */
-static long ksu_copy_from_user_retry(void *to, const void __user *from,
-                                     unsigned long count)
+static inline long ksu_copy_from_user_retry(void *to, const void __user *from,
+                                            unsigned long count)
 {
     long ret = copy_from_user_nofault(to, from, count);
+
     if (likely(!ret))
         return ret;
-
-    // we faulted! fallback to slow path
     return copy_from_user(to, from, count);
 }
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 222)
+static inline ssize_t ksu_strscpy_pad(char *dest, const char *src, size_t count)
+{
+    ssize_t result;
+
+    if (count == 0)
+        return -E2BIG;
+    result = strscpy(dest, src, count);
+    if (result >= 0 && (size_t)result < count)
+        memset(dest + result, 0, count - result);
+    return result;
+}
+#define strscpy_pad ksu_strscpy_pad
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 7, 0)
+#ifndef TWA_RESUME
+#define TWA_RESUME true
+#endif
+#endif
+
+#ifndef fallthrough
+#define fallthrough do { } while (0)
+#endif
 
 #endif

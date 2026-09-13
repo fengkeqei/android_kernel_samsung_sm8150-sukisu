@@ -31,6 +31,7 @@ import kotlinx.parcelize.Parcelize
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ui.util.FlashResult
 import com.sukisu.ultra.ui.util.LkmSelection
+import com.sukisu.ultra.ui.util.downloadBoot
 import com.sukisu.ultra.ui.util.flashModule
 import com.sukisu.ultra.ui.util.installBoot
 import com.sukisu.ultra.ui.util.restoreBoot
@@ -39,6 +40,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class FlashingStatus {
     FLASHING,
@@ -75,6 +77,19 @@ sealed class FlashIt : Parcelable {
         val partition: String? = null,
         val allowShell: Boolean = false,
         val enableAdb: Boolean = false,
+        val backup: Boolean = false,
+        val spoofRelease: String = "",
+        val spoofVersion: String = "",
+    ) : FlashIt()
+
+    @Parcelize
+    data class DownloadBoot(
+        val url: String,
+        val partition: String,
+        val lkm: LkmSelection,
+        val allowShell: Boolean = false,
+        val enableAdb: Boolean = false,
+        val backup: Boolean = false,
         val spoofRelease: String = "",
         val spoofVersion: String = "",
     ) : FlashIt()
@@ -117,6 +132,20 @@ fun flashIt(
             flashIt.partition,
             flashIt.allowShell,
             flashIt.enableAdb,
+            flashIt.backup,
+            flashIt.spoofRelease,
+            flashIt.spoofVersion,
+            onStdout,
+            onStderr
+        )
+
+        is FlashIt.DownloadBoot -> downloadBoot(
+            flashIt.url,
+            flashIt.partition,
+            flashIt.lkm,
+            flashIt.allowShell,
+            flashIt.enableAdb,
+            flashIt.backup,
             flashIt.spoofRelease,
             flashIt.spoofVersion,
             onStdout,
@@ -214,7 +243,7 @@ fun JailbreakFlashWarningDialog(
 
     LaunchedEffect(Unit) {
         while (countdown > 0) {
-            delay(1000)
+            delay(1000.milliseconds)
             countdown--
         }
     }

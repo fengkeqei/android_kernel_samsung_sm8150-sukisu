@@ -22,29 +22,25 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,10 +60,14 @@ import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.Natives
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ui.component.AppIconImage
+import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
+import com.sukisu.ultra.ui.component.material.ExpressiveToggleButton
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
 import com.sukisu.ultra.ui.component.material.SegmentedListItem
 import com.sukisu.ultra.ui.component.material.SegmentedSwitchItem
 import com.sukisu.ultra.ui.component.material.SnackBarHost
+import com.sukisu.ultra.ui.component.material.TopBarBackButton
+import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.component.profile.AppProfileConfig
 import com.sukisu.ultra.ui.component.profile.RootProfileConfig
 import com.sukisu.ultra.ui.component.profile.TemplateConfig
@@ -79,7 +79,6 @@ import com.sukisu.ultra.ui.viewmodel.SuperUserViewModel
  * @author weishu
  * @date 2023/5/16.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppProfileScreenMaterial(
     state: AppProfileUiState,
@@ -88,16 +87,13 @@ fun AppProfileScreenMaterial(
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
-    LaunchedEffect(Unit) {
-        scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
-    }
-
-    Scaffold(
+    ExpressiveScaffold(
         topBar = {
             TopBar(
                 onBack = actions.onBack,
                 scrollBehavior = scrollBehavior,
                 isUidGroup = state.isUidGroup,
+                showActions = !state.appGroup.primary.isWebViewZygote,
                 packageName = state.packageName,
                 userId = state.uid / 100000,
                 onLaunchApp = actions.onLaunchApp,
@@ -115,7 +111,11 @@ fun AppProfileScreenMaterial(
                 .imePadding()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .verticalScroll(rememberScrollState()),
-            packageName = if (state.isUidGroup) "" else state.appGroup.primary.packageName,
+            packageName = if (state.isUidGroup) {
+                ""
+            } else {
+                state.appGroup.primary.displayIdentifier
+            },
             appLabel = if (state.isUidGroup) ownerNameForUid(state.appGroup.primary.uid) else state.appGroup.primary.label,
             appIcon = {
                 AppIconImage(
@@ -132,6 +132,7 @@ fun AppProfileScreenMaterial(
             appVersionCode = if (state.isUidGroup) 0L else state.appGroup.primary.packageInfo.longVersionCode,
             profile = state.profile,
             isUidGroup = state.isUidGroup,
+            isSpecialApp = state.appGroup.primary.special,
             affectedApps = state.appGroup.apps,
             onViewTemplate = actions.onViewTemplate,
             onManageTemplate = actions.onManageTemplate,
@@ -152,12 +153,13 @@ private fun AppProfileInner(
     appVersionCode: Long,
     profile: Natives.Profile,
     isUidGroup: Boolean = false,
+    isSpecialApp: Boolean = false,
     affectedApps: List<SuperUserViewModel.AppInfo> = emptyList(),
     onViewTemplate: (id: String) -> Unit = {},
     onManageTemplate: () -> Unit = {},
     onProfileChange: (Natives.Profile) -> Unit,
 ) {
-    val isRootGranted = profile.allowSu
+    val isRootGranted = !isSpecialApp && profile.allowSu
     val userId = appUid / 100000
     val appId = appUid % 100000
 
@@ -179,22 +181,24 @@ private fun AppProfileInner(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            content = listOf(
-                {
+            content = buildList<@Composable () -> Unit> {
+                add {
                     SegmentedListItem(
                         headlineContent = { Text(appLabel) },
                         supportingContent = {
                             Column {
-                                if (!isUidGroup) {
-                                    Text("$appVersionName ($appVersionCode)", color = MaterialTheme.colorScheme.outline)
-                                    Text(packageName, color = MaterialTheme.colorScheme.outline)
+                                if (isSpecialApp) {
+                                    Text(packageName, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                } else if (!isUidGroup) {
+                                    Text("$appVersionName ($appVersionCode)", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(packageName, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 } else {
                                     if (sharedUserId.isNotEmpty()) {
-                                        Text(text = sharedUserId, color = MaterialTheme.colorScheme.outline)
+                                        Text(text = sharedUserId, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                     Text(
                                         text = stringResource(R.string.group_contains_apps, affectedApps.size),
-                                        color = MaterialTheme.colorScheme.outline
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -205,41 +209,41 @@ private fun AppProfileInner(
                                 if (userId != 0) {
                                     StatusTag(
                                         label = "USER $userId",
-                                        contentColor = MaterialTheme.colorScheme.onTertiary,
-                                        backgroundColor = MaterialTheme.colorScheme.tertiary
+                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
                                     )
                                     StatusTag(
                                         label = "UID $appId",
-                                        contentColor = MaterialTheme.colorScheme.onTertiary,
-                                        backgroundColor = MaterialTheme.colorScheme.tertiary
+                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
                                     )
                                 } else {
                                     StatusTag(
                                         label = "UID $appUid",
-                                        contentColor = MaterialTheme.colorScheme.onTertiary,
-                                        backgroundColor = MaterialTheme.colorScheme.tertiary
+                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
                                     )
                                 }
                             }
                         }
                     )
-                },
-                {
+                }
+                if (!isSpecialApp) add {
                     SegmentedSwitchItem(
                         icon = Icons.Filled.Security,
                         title = stringResource(id = R.string.superuser),
                         checked = isRootGranted,
                         onCheckedChange = { onProfileChange(profile.copy(allowSu = it)) },
                     )
-                },
-                {
+                }
+                add {
                     SegmentedListItem(
                         headlineContent = { Text(stringResource(R.string.profile)) },
-                        supportingContent = { Text(mode.text, color = MaterialTheme.colorScheme.outline) },
+                        supportingContent = { Text(mode.text, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         leadingContent = { Icon(Icons.Filled.AccountCircle, null) },
                     )
                 }
-            )
+            }
         )
 
         Crossfade(targetState = isRootGranted, label = "") { current ->
@@ -305,7 +309,7 @@ private fun AppProfileInner(
                         {
                             SegmentedListItem(
                                 headlineContent = { Text(app.label) },
-                                supportingContent = { Text(app.packageName) },
+                                supportingContent = { Text(app.displayIdentifier) },
                                 leadingContent = {
                                     AppIconImage(
                                         packageInfo = app.packageInfo,
@@ -327,12 +331,12 @@ private fun AppProfileInner(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TopBar(
     onBack: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     isUidGroup: Boolean = false,
+    showActions: Boolean = true,
     packageName: String = "",
     userId: Int = 0,
     onLaunchApp: (String, Int) -> Unit,
@@ -343,12 +347,10 @@ private fun TopBar(
     LargeFlexibleTopAppBar(
         title = { Text(stringResource(R.string.profile)) },
         navigationIcon = {
-            IconButton(
-                onClick = onBack
-            ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
+            TopBarBackButton(onClick = onBack)
         },
         actions = {
-            if (!isUidGroup) {
+            if (!isUidGroup && showActions) {
                 var showDropdown by remember { mutableStateOf(false) }
 
                 IconButton(
@@ -358,48 +360,39 @@ private fun TopBar(
                         imageVector = Icons.Filled.MoreVert,
                         contentDescription = stringResource(id = R.string.settings)
                     )
-                    DropdownMenu(
+                    DropdownMenuPopup(
                         expanded = showDropdown,
                         onDismissRequest = { showDropdown = false }
                     ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(id = R.string.launch_app)) },
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                showDropdown = false
-                                onLaunchApp(packageName, userId)
-                            },
+                        val menuItems = listOf(
+                            R.string.launch_app to onLaunchApp,
+                            R.string.force_stop_app to onForceStopApp,
+                            R.string.restart_app to onRestartApp,
                         )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(id = R.string.force_stop_app)) },
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                showDropdown = false
-                                onForceStopApp(packageName, userId)
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(id = R.string.restart_app)) },
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                showDropdown = false
-                                onRestartApp(packageName, userId)
-                            },
-                        )
+                        DropdownMenuGroup(shapes = MenuDefaults.groupShapes()) {
+                            menuItems.forEachIndexed { index, (resId, action) ->
+                                DropdownMenuItem(
+                                    selected = false,
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                        showDropdown = false
+                                        action(packageName, userId)
+                                    },
+                                    text = { Text(stringResource(id = resId)) },
+                                    shapes = MenuDefaults.itemShape(index = index, count = menuItems.size),
+                                )
+                            }
+                        }
                     }
                 }
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surface
-        ),
+        colors = expressiveTopAppBarColors(),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         scrollBehavior = scrollBehavior
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ProfileBox(
     mode: Mode,
@@ -420,11 +413,11 @@ private fun ProfileBox(
         )
 
         options.forEachIndexed { index, (m, label) ->
-            ToggleButton(
+            ExpressiveToggleButton(
                 checked = mode == m,
                 onCheckedChange = { checked ->
                     if (checked && (m != Mode.Template || hasTemplate)) {
-                        haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                         onModeChange(m)
                     }
                 },

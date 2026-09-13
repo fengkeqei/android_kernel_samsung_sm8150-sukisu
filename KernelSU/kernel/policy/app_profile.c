@@ -17,7 +17,7 @@
 #include "selinux/selinux.h"
 #include "infra/su_mount_ns.h"
 #include "hook/tp_marker.h"
-#include "compat/kernel_compat.h"
+#include "kernel_compat.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
 static struct group_info root_groups = { .usage = REFCOUNT_INIT(2) };
@@ -214,6 +214,10 @@ out_abort_creds:
         ksu_put_root_profile(profile);
     abort_creds(cred);
     return ret;
+}
+
+void __init ksu_app_profile_init(void)
+{
 }
 
 void escape_to_root_for_init(void)

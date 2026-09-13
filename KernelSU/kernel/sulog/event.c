@@ -2,6 +2,7 @@
 #include <linux/compat.h>
 #include <linux/cred.h>
 #include <linux/gfp.h>
+#include <linux/kernel.h>
 #include <linux/overflow.h>
 #include <linux/sched/signal.h>
 #include <linux/slab.h>

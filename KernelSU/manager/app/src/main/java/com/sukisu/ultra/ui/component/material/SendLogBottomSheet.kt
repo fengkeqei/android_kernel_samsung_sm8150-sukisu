@@ -17,14 +17,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -56,7 +56,6 @@ private tailrec fun Context.findComponentActivity(): ComponentActivity? {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SendLogBottomSheet(
     onDismiss: () -> Unit,
@@ -68,7 +67,7 @@ fun SendLogBottomSheet(
     val sendLog = stringResource(R.string.send_log)
     val loadingDialog = rememberLoadingDialog()
     val haptic = LocalHapticFeedback.current
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
     val scope = rememberCoroutineScope()
     val dismiss = {
         scope.launch { sheetState.hide() }

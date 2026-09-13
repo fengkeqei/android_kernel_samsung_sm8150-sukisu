@@ -19,7 +19,7 @@
 #include "ss/services.h"
 #include "linux/lsm_audit.h" // IWYU pragma: keep
 #include "xfrm.h"
-#include "compat/kernel_compat.h"
+#include "kernel_compat.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
 #define SELINUX_POLICY_INSTEAD_SELINUX_SS
@@ -29,24 +29,23 @@
 
 static DEFINE_MUTEX(ksu_rules);
 
+#ifdef KSU_COMPAT_USE_SELINUX_STATE
+#define KSU_COMPAT_SELINUX_STATE_API
+#endif
+
+#ifdef KSU_COMPAT_SELINUX_STATE_API
 static struct policydb *get_policydb(void)
 {
-    struct policydb *db;
-#ifdef KSU_COMPAT_USE_SELINUX_STATE
-#ifdef SELINUX_POLICY_INSTEAD_SELINUX_SS
-    struct selinux_policy *policy = selinux_state.policy;
-    db = &policy->policydb;
-#else
-    struct selinux_ss *ss = selinux_state.ss;
-    db = &ss->policydb;
-#endif
-#else
-    db = &policydb;
-#endif
-    return db;
+    return &selinux_state.ss->policydb;
 }
+#else
+static struct policydb *get_policydb(void)
+{
+    return &policydb;
+}
+#endif
 
-#if ((!defined(KSU_COMPAT_USE_SELINUX_STATE)) || \
+#if ((!defined(KSU_COMPAT_SELINUX_STATE_API)) || \
 	LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0))
 extern int avc_ss_reset(u32 seqno);
 #else
@@ -55,7 +54,7 @@ extern int avc_ss_reset(struct selinux_avc *avc, u32 seqno);
 // reset avc cache table, otherwise the new rules will not take effect if already denied
 static void reset_avc_cache()
 {
-#if ((!defined(KSU_COMPAT_USE_SELINUX_STATE)) || \
+#if ((!defined(KSU_COMPAT_SELINUX_STATE_API)) || \
 	LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0))
     avc_ss_reset(0);
     selnl_notify_policyload(0);
@@ -205,10 +204,10 @@ void apply_kernelsu_rules()
 out_unlock:
 	mutex_unlock(&selinux_state.policy_mutex);
 #else
-    cpumask_t old_mask;
-	db = get_policydb();
-	rwlock_t *lock = ksu_get_policy_rwlock();
-	
+		cpumask_t old_mask;
+		db = get_policydb();
+		rwlock_t *lock = ksu_get_policy_rwlock();
+
 	if (!lock)
 		goto do_stop_machine;
 

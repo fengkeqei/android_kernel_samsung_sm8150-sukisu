@@ -10,21 +10,19 @@
 #include <linux/task_work.h>
 #include <linux/uaccess.h>
 #include <linux/version.h>
+#include <linux/compat.h>
+#include <linux/kernelsu.h>
+#include <asm/unistd.h>
 
 #include "uapi/supercall.h"
 #include "kpm/kpm.h"
 #include "supercall/internal.h"
+#include "manager/manager_identity.h"
+#include "policy/allowlist.h"
 #include "arch.h"
+#include "util.h"
+#include "kernel_compat.h"
 #include "klog.h" // IWYU pragma: keep
-#include "compat/kernel_compat.h"
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
-#define ksu_close_fd(fd) close_fd(fd)
-#elif defined(ksys_close)
-#define ksu_close_fd(fd) ksys_close(fd)
-#else
-#define ksu_close_fd(fd) sys_close(fd)
-#endif
 
 struct ksu_install_fd_tw {
     struct callback_head cb;
@@ -49,18 +47,36 @@ static const struct file_operations anon_ksu_fops = {
     .release = anon_ksu_release,
 };
 
-int ksu_install_fd(void)
+static bool ksu_magic_reboot_is_authorized(int magic1, int magic2)
+{
+    return magic1 == KSU_INSTALL_MAGIC1 && magic2 == KSU_INSTALL_MAGIC2 &&
+           (is_manager() || ksu_is_allow_uid_for_current(current_uid().val));
+}
+
+bool ksu_seccomp_allow_magic_reboot(int syscall_nr, unsigned long arg0, unsigned long arg1)
+{
+#if defined(__aarch64__)
+    if (is_compat_task() || syscall_nr != __NR_reboot)
+        return false;
+
+    return ksu_magic_reboot_is_authorized((int)arg0, (int)arg1);
+#else
+    return false;
+#endif
+}
+
+int ksu_install_fd(bool close_on_exec)
 {
     struct file *filp;
     int fd;
 
-    fd = get_unused_fd_flags(O_CLOEXEC);
+    fd = get_unused_fd_flags(close_on_exec ? O_CLOEXEC : 0);
     if (fd < 0) {
         pr_err("ksu_install_fd: failed to get unused fd\n");
         return fd;
     }
 
-    filp = anon_inode_getfile("[ksu_driver]", &anon_ksu_fops, NULL, O_RDWR | O_CLOEXEC);
+    filp = anon_inode_getfile("[ksu_driver]", &anon_ksu_fops, NULL, O_RDWR);
     if (IS_ERR(filp)) {
         pr_err("ksu_install_fd: failed to create anon inode file\n");
         put_unused_fd(fd);
@@ -75,7 +91,7 @@ int ksu_install_fd(void)
 static void ksu_install_fd_tw_func(struct callback_head *cb)
 {
     struct ksu_install_fd_tw *tw = container_of(cb, struct ksu_install_fd_tw, cb);
-    int fd = ksu_install_fd();
+    int fd = ksu_install_fd(true);
 
     pr_info("[%d] install ksu fd: %d\n", current->pid, fd);
     if (copy_to_user(tw->outp, &fd, sizeof(fd))) {
@@ -92,7 +108,7 @@ static int reboot_handler_pre(struct kprobe *p, struct pt_regs *regs)
     int magic1 = (int)PT_REGS_PARM1(real_regs);
     int magic2 = (int)PT_REGS_PARM2(real_regs);
 
-    if (magic1 == KSU_INSTALL_MAGIC1 && magic2 == KSU_INSTALL_MAGIC2) {
+    if (ksu_magic_reboot_is_authorized(magic1, magic2)) {
         struct ksu_install_fd_tw *tw;
         unsigned long arg4 = (unsigned long)PT_REGS_SYSCALL_PARM4(real_regs);
 

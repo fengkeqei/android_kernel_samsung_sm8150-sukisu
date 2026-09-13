@@ -13,15 +13,47 @@
 #include <linux/syscalls.h>
 #include <linux/task_work.h>
 #include <linux/version.h>
+#include <linux/mount.h>
 
 #include "arch.h"
 #include "klog.h" // IWYU pragma: keep
 #include "ksu.h"
 #include "infra/su_mount_ns.h"
+#include "util.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0)
-extern int path_mount(const char *dev_name, struct path *path, const char *type_page, unsigned long flags,
-                      void *data_page);
+extern int path_mount(const char *dev_name, struct path *path, const char *type_page,
+                      unsigned long flags, void *data_page);
+
+static int ksu_path_mount(const char *dev_name, struct path *path,
+                          const char *type_page, unsigned long flags,
+                          void *data_page)
+{
+    return path_mount(dev_name, path, type_page, flags, data_page);
+}
+#else
+extern long do_mount(const char *dev_name, const char __user *dir_name,
+                     const char *type_page, unsigned long flags,
+                     void *data_page);
+
+static int ksu_path_mount(const char *dev_name, struct path *path,
+                          const char *type_page, unsigned long flags,
+                          void *data_page)
+{
+    char buffer[384];
+    char *realpath = d_path(path, buffer, sizeof(buffer));
+    mm_segment_t old_fs;
+    long ret;
+
+    if (IS_ERR(realpath))
+        return PTR_ERR(realpath);
+    old_fs = get_fs();
+    set_fs(KERNEL_DS);
+    ret = do_mount(dev_name, (const char __user *)realpath, type_page, flags,
+                   data_page);
+    set_fs(old_fs);
+    return ret;
+}
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
@@ -34,11 +66,10 @@ extern long __x64_sys_setns(const struct pt_regs *regs);
 static long ksu_sys_setns(int fd, int flags)
 {
     struct pt_regs regs;
-    memset(&regs, 0, sizeof(regs));
 
+    memset(&regs, 0, sizeof(regs));
     PT_REGS_PARM1(&regs) = fd;
     PT_REGS_PARM2(&regs) = flags;
-
 #if defined(__aarch64__)
     return __arm64_sys_setns(&regs);
 #elif defined(__x86_64__)
@@ -122,13 +153,7 @@ try_setns:
     fd_install(fd, ns_file);
     ret = ksu_sys_setns(fd, CLONE_NEWNS);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
-    close_fd(fd);
-#elif defined(ksys_close)
-    ksys_close(fd);
-#else
-    sys_close(fd);
-#endif
+    ksu_close_fd(fd);
 
     if (ret) {
         pr_warn("call setns failed: %ld\n", ret);
@@ -165,26 +190,8 @@ static void ksu_mnt_ns_individual(void)
     // make root mount private
     struct path root_path;
     get_fs_root(current->fs, &root_path);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0)
-    int pm_ret = path_mount(NULL, &root_path, NULL, MS_PRIVATE | MS_REC, NULL);
-#else
-    char *root_buf = kmalloc(PATH_MAX, GFP_KERNEL);
-    char *root_name;
-    int pm_ret = -ENOMEM;
-
-    if (!root_buf)
-        goto out_put_root;
-
-    root_name = d_path(&root_path, root_buf, PATH_MAX);
-    if (IS_ERR(root_name)) {
-        pm_ret = PTR_ERR(root_name);
-    } else {
-        pm_ret = do_mount(NULL, (const char __user *)root_name, NULL, MS_PRIVATE | MS_REC, NULL);
-    }
-
-    kfree(root_buf);
-out_put_root:
-#endif
+    int pm_ret = ksu_path_mount(NULL, &root_path, NULL, MS_PRIVATE | MS_REC,
+                                NULL);
     path_put(&root_path);
 
     if (pm_ret < 0) {
@@ -202,11 +209,6 @@ void setup_mount_ns(int32_t ns_mode)
 
     if (ns_mode != KSU_NS_GLOBAL && ns_mode != KSU_NS_INDIVIDUAL) {
         pr_warn("pid: %d ,unknown mount namespace mode: %d\n", current->pid, ns_mode);
-        return;
-    }
-
-    if (!ksu_cred) {
-        pr_err("no ksu cred! skip mnt_ns magic for pid: %d.\n", current->pid);
         return;
     }
 

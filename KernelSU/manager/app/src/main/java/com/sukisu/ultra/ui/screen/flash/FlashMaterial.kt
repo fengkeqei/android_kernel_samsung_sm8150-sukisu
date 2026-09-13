@@ -20,14 +20,11 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallExtendedFloatingActionButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -43,9 +40,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ui.component.KeyEventBlocker
+import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SnackBarHost
+import com.sukisu.ultra.ui.component.material.TopBarBackButton
+import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FlashScreenMaterial(
     state: FlashUiState,
@@ -60,8 +59,12 @@ fun FlashScreenMaterial(
         )
     }
 
-    Scaffold(
-        snackbarHost = { SnackBarHost(hostState = snackBarHost, modifier = Modifier.let { if (state.showRebootAction) it else it.safeDrawingPadding() }) },
+    ExpressiveScaffold(
+        snackbarHost = {
+            SnackBarHost(
+                hostState = snackBarHost,
+                modifier = Modifier.let { if (state.showRebootAction) it else it.safeDrawingPadding() })
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -75,10 +78,9 @@ fun FlashScreenMaterial(
                         )
                     )
                 },
+                colors = expressiveTopAppBarColors(),
                 navigationIcon = {
-                    IconButton(onClick = actions.onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
-                    }
+                    TopBarBackButton(onClick = actions.onBack)
                 },
                 actions = {
                     IconButton(onClick = actions.onSaveLog) {
@@ -92,7 +94,7 @@ fun FlashScreenMaterial(
                 SmallExtendedFloatingActionButton(
                     onClick = actions.onReboot,
                     icon = { Icon(Icons.Filled.Refresh, null) },
-                    text = { Text(stringResource(R.string.reboot)) },
+                    text = { Text(stringResource(state.rebootLabelRes)) },
                     modifier = Modifier.padding(
                         bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
                                 WindowInsets.captionBar.asPaddingValues().calculateBottomPadding(),

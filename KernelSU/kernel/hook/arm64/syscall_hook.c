@@ -153,7 +153,6 @@ static long __nocfi ksu_syscall_dispatcher_from_regs(const struct pt_regs *regs)
     if (regs->syscallno == orig_nr)
         return -ENOSYS;
 
-    // Restore registers to original state before dispatching
     ((struct pt_regs *)regs)->syscallno = orig_nr;
     PT_REGS_ORIG_SYSCALL((struct pt_regs *)regs) = orig_nr;
 
@@ -179,7 +178,6 @@ static long __nocfi ksu_syscall_dispatcher(unsigned long arg1, unsigned long arg
     regs->regs[3] = arg4;
     regs->regs[4] = arg5;
     regs->regs[5] = arg6;
-
     return ksu_syscall_dispatcher_from_regs(regs);
 }
 #else

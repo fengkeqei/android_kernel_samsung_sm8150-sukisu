@@ -352,9 +352,8 @@ static int ksu_wrapper_fadvise(struct file *fp, loff_t off1, loff_t off2, int fl
 {
     struct ksu_file_wrapper *data = fp->private_data;
     struct file *orig = data->orig;
-    if (orig->f_op->fadvise) {
+    if (orig->f_op->fadvise)
         return orig->f_op->fadvise(orig, off1, off2, flags);
-    }
     return -EINVAL;
 }
 #endif
@@ -478,10 +477,8 @@ static struct inode *ksu_anon_inode_make_secure_inode(const char *name, const st
     struct inode *inode;
 
     (void)context_inode;
-
-    if (unlikely(!anon_inode_mnt)) {
+    if (unlikely(!anon_inode_mnt))
         return ERR_PTR(-ENODEV);
-    }
 
     inode = alloc_anon_inode(anon_inode_mnt->mnt_sb);
     if (IS_ERR(inode))
@@ -514,7 +511,6 @@ static struct file *ksu_anon_inode_create_getfile_compat(const char *name, const
 
     path.mnt = mntget(anon_inode_mnt);
     d_instantiate(path.dentry, inode);
-
     file = alloc_file(&path, OPEN_FMODE(flags), fops);
     if (IS_ERR(file))
         goto err_path;
@@ -522,7 +518,6 @@ static struct file *ksu_anon_inode_create_getfile_compat(const char *name, const
     file->f_mapping = inode->i_mapping;
     file->f_flags = flags & (O_ACCMODE | O_NONBLOCK);
     file->private_data = priv;
-
     return file;
 
 err_path:

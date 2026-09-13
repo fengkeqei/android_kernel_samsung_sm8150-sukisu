@@ -4,7 +4,7 @@
     <string name="home_not_installed">Kurulmadı</string>
     <string name="home_click_to_install">Yüklemek için dokunun</string>
     <string name="home_working">Çalışıyor</string>
-    <string name="home_working_version">Sürüm: %d</string>
+    <string name="home_working_version">Sürüm: %s</string>
     <string name="home_unsupported">Desteklenmiyor</string>
     <string name="home_unsupported_reason">KernelSU şimdilik sadece GKI çekirdeklerini destekliyor</string>
     <string name="home_version_mismatch">Yönetici sürümü (%1$d) ile KernelSU sürücüsü sürümü (%2$d) uyuşmuyor.</string>
@@ -140,7 +140,12 @@
     <string name="enable_web_debugging">WebView hata ayıklaması</string>
     <string name="enable_web_debugging_summary">Web kullanıcı arayüzünde hata ayıklamak için kullanılabilir, lütfen yalnızca gerektiğinde etkinleştirin.</string>
     <string name="direct_install">Doğrudan kur (Tavsiye edilen)</string>
-    <string name="select_file">Bir dosya seçin</string>
+    <string name="select_file">Bir dosya seçin ve yamalayın</string>
+    <string name="download_file">Bir dosya indirin ve yamalayın</string>
+    <string name="download_dialog_title">Görüntü URL\'sini girin</string>
+    <string name="download_dialog_msg">Tam OTA görüntüsü veya fabrika görüntüsü</string>
+    <string name="download_no_boot_partition">Görüntüde boot, init_boot veya vendor_boot bölümü bulunamadı</string>
+    <string name="download_probe_failed">Görüntü incelenemedi: %1$s</string>
     <string name="install_inactive_slot">Etkin olmayan yuvaya kur (OTA\'dan sonra)</string>
     <string name="install_inactive_slot_warning">Cihazınız geçerli etkin olmayan yuvaya **ZORLA** yeniden başlatılacaktır!
 \nBu seçeneği yalnızca OTA tamamlandıktan sonra kullanın.
@@ -258,6 +263,9 @@
     <string name="download">İndir</string>
     <string name="download_cancel">İptal</string>
     <string name="download_install">Yükle</string>
+    <string name="profile_flags_desc_no_new_privs">Bu root profili bağlamında KernelSU aracılığıyla daha fazla ayrıcalık yükseltmesini engeller.</string>
+    <string name="install_force_backup">Stok imaj olarak yedekle</string>
+    <string name="install_force_backup_summary">Lütfen seçtiğiniz boot imajının stok imaj olduğundan emin olun</string>
     <!-- Customize -->
     <string name="hook_type">Hook Türü</string>
     <string name="manual_hook">Manuel Hook</string>
@@ -487,6 +495,11 @@
     <string name="susfs_backup_info_date">Yedekleme Tarihi: %s</string>
     <string name="susfs_backup_info_device">Cihaz: %s</string>
     <string name="susfs_backup_info_version">Sürüm: %s</string>
+    <string name="susfs_cmdline_or_bootconfig_title">Cmdline / Bootconfig Taklidi</string>
+    <string name="susfs_cmdline_or_bootconfig_description">/proc/cmdline (GKI olmayan) veya /proc/bootconfig (GKI) yerine kullanılacak bir metin dosyası seçin. İçerik SuSFS üzerinden kernel\'a gönderilir. Otomatik Başlatma açıksa her açılışta yeniden uygulanır.</string>
+    <string name="susfs_cmdline_or_bootconfig_current">Mevcut yol: %s</string>
+    <string name="susfs_cmdline_or_bootconfig_none">(henüz seçilmedi)</string>
+    <string name="susfs_cmdline_or_bootconfig_pick_file">Cmdline / Bootconfig Dosyası Seç</string>
     <string name="hide_bl_script">Kilit durumu</string>
     <string name="hide_bl_script_description">Late_start servis modunda bootloader kilit durumu özniteliğinin (attribute) üzerine yazar</string>
     <string name="cleanup_residue">Kalıntıları Temizle</string>

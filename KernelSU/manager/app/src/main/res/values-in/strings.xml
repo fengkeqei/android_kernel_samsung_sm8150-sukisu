@@ -4,7 +4,7 @@
     <string name="home_not_installed">Tidak terpasang</string>
     <string name="home_click_to_install">Ketuk untuk memasang</string>
     <string name="home_working">Berfungsi</string>
-    <string name="home_working_version">Versi: %d</string>
+    <string name="home_working_version">Versi: %s</string>
     <string name="home_unsupported">Tidak didukung</string>
     <string name="home_unsupported_reason">KernelSU sekarang hanya mendukung kernel GKI, tetapi Anda dapat menambal image untuk perangkat GKI.</string>
     <string name="home_version_mismatch">Versi manajer (%1$d) dan versi driver KernelSU (%2$d) tidak sesuai.</string>
@@ -123,7 +123,12 @@
     <string name="enable_web_debugging">Debugging WebView</string>
     <string name="enable_web_debugging_summary">Dapat digunakan untuk mendebug WebUI. Harap aktifkan hanya saat diperlukan.</string>
     <string name="direct_install">Langsung pasang (Disarankan)</string>
-    <string name="select_file">Pilih berkas</string>
+    <string name="select_file">Pilih dan tambal berkas</string>
+    <string name="download_file">Unduh dan tambal berkas</string>
+    <string name="download_dialog_title">Masukkan URL image</string>
+    <string name="download_dialog_msg">Image OTA penuh atau image pabrik</string>
+    <string name="download_no_boot_partition">Tidak ada partisi boot, init_boot, atau vendor_boot yang ditemukan di image</string>
+    <string name="download_probe_failed">Gagal memeriksa image: %1$s</string>
     <string name="install_inactive_slot">Pasang ke slot nonaktif (setelah OTA)</string>
     <string name="install_inactive_slot_warning">Perangkat Anda akan **DIPAKSA** untuk boot ke slot nonaktif saat ini setelah mulai ulang! \nGunakan hanya setelah proses OTA selesai. \nLanjutkan?</string>
     <string name="jailbreak_flash_warning">Anda sedang dalam **Mode jailbreak**. Memasang partisi pada perangkat dengan **bootloader terkunci** akan merusak AVB (Android Verified Boot). dan dapat menyebabkan perangkat **gagal boot**.\n\nPastikan bootloader Anda tidak terkunci sebelum melanjutkan!</string>
@@ -175,6 +180,9 @@
     <string name="settings_key_color_default">Default</string>
     <string name="settings_ui_mode">Gaya Antarmuka</string>
     <string name="settings_ui_mode_summary">Pilih gaya antarmuka.</string>
+    <string name="settings_language">Bahasa</string>
+    <string name="settings_language_summary">Pilih bahasa tampilan aplikasi</string>
+    <string name="settings_language_system">Ikuti sistem</string>
     <string name="settings_page_scale">Skala Tampilan</string>
     <string name="settings_page_scale_summary">Sesuaikan skala tampilan.</string>
     <string name="settings_color_spec">Spesifikasi Warna</string>
@@ -238,29 +246,7 @@
     <string name="download">Unduh</string>
     <string name="download_cancel">Batal</string>
     <string name="download_install">Pasang</string>
-    <!-- Customize -->
-    <!-- Log Viewer -->
-    <!-- Umount Manager -->
-    <!-- Kernel Flash Progress Related -->
-    <!-- KPM -->
-    <!-- Tools -->
-    <!-- Zip File Type Labels -->
-    <!-- Zip Install Prompts -->
-    <!-- SuSFS Configuration -->
-    <!-- SuSFS Reset Confirmation -->
-    <!-- SuSFS Toast Messages -->
-    <!-- Auto Start -->
-    <!-- SuSFS Tab Titles -->
-    <!-- SuSFS Path Management -->
-    <!-- SuSFS Reset Categories -->
-    <!-- SuSFS Path Settings -->
-    <!-- SuSFS Enabled Features -->
-    <!-- Feature Labels -->
-    <!-- SuSFS Feature Configuration -->
-    <!-- SuSFS Kstat Related Strings -->
-    <!-- SuSFS Mount Hiding Control Related Strings -->
-    <!-- SuSFS Backup and Restore Related Strings -->
-    <!-- SuSFS Loop Path Related Strings -->
-    <!-- SuSFS Loop Path Feature Description -->
-    <!-- SUS Map Related Strings -->
+    <string name="profile_flags_desc_no_new_privs">Mencegah eskalasi hak akses lebih lanjut melalui KernelSU dalam konteks profil root ini.</string>
+    <string name="install_force_backup">Cadangkan sebagai image stok</string>
+    <string name="install_force_backup_summary">Pastikan image boot yang Anda pilih adalah image stok</string>
 </resources>

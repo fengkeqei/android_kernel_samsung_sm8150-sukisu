@@ -61,6 +61,7 @@ class ModuleRepoRepositoryImpl : ModuleRepoRepository {
         val authors = if (authorList.isNotEmpty()) authorList.joinToString(", ") { it.name } else item.optString("authors", "")
         val summary = item.optString("summary", "")
         val metamodule = item.optBoolean("metamodule", false)
+        val zygisk = item.optBoolean("zygisk", false)
         val stargazerCount = item.optInt("stargazerCount", 0)
         val updatedAt = item.optString("updatedAt", "")
         val createdAt = item.optString("createdAt", "")
@@ -81,12 +82,8 @@ class ModuleRepoRepositoryImpl : ModuleRepoRepository {
                 }
                 s
             }
-            val vcAny = lr.opt("versionCode")
-            latestVersionCode = when (vcAny) {
-                is Number -> vcAny.toLong()
-                is String -> vcAny.toLongOrNull() ?: 0L
-                else -> 0L
-            }
+
+            latestVersionCode = lr.optInt("versionCode", 0).toLong()
             latestRelease = lrName
             latestReleaseTime = lrTime
             if (lrUrl.isNotEmpty()) {
@@ -102,6 +99,7 @@ class ModuleRepoRepositoryImpl : ModuleRepoRepository {
             authorList = authorList,
             summary = summary,
             metamodule = metamodule,
+            zygisk = zygisk,
             stargazerCount = stargazerCount,
             updatedAt = updatedAt,
             createdAt = createdAt,

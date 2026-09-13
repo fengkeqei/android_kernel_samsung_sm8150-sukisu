@@ -18,9 +18,6 @@ typedef asmlinkage long (*syscall_fn_t)(const struct pt_regs *);
 
 extern syscall_fn_t *ksu_syscall_table;
 
-// Dispatcher slot number in syscall table
-extern int ksu_dispatcher_nr;
-
 static __always_inline long ksu_call_syscall(syscall_fn_t fn,
                                              const struct pt_regs *regs)
 {
@@ -37,6 +34,9 @@ static __always_inline long ksu_call_syscall_nr(int nr,
 {
     return ksu_call_syscall(ksu_syscall_table[nr], regs);
 }
+
+// Dispatcher slot number in syscall table
+extern int ksu_dispatcher_nr;
 
 // Syscall hook handler type.
 // orig_nr: the original syscall number before redirection

@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -49,6 +48,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -76,14 +76,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ui.component.ListPopupDefaults
+import com.sukisu.ultra.ui.component.PagerNavigationSpringSpec
+import com.sukisu.ultra.ui.component.ScrollToTopOnChange
 import com.sukisu.ultra.ui.component.SearchStatus
 import com.sukisu.ultra.ui.component.dialog.ConfirmDialogHandle
 import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
 import com.sukisu.ultra.ui.component.markdown.GithubMarkdown
 import com.sukisu.ultra.ui.component.miuix.SearchBarFake
-import com.sukisu.ultra.ui.component.miuix.deferredTopPadding
 import com.sukisu.ultra.ui.component.miuix.SearchBox
 import com.sukisu.ultra.ui.component.miuix.SearchPager
+import com.sukisu.ultra.ui.component.miuix.deferredTopPadding
 import com.sukisu.ultra.ui.theme.LocalEnableBlur
 import com.sukisu.ultra.ui.theme.isInDarkTheme
 import com.sukisu.ultra.ui.util.BlurredBar
@@ -101,6 +103,7 @@ import top.yukonga.miuix.kmp.basic.ListPopupColumn
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.PopupPositionProvider
 import top.yukonga.miuix.kmp.basic.PullToRefresh
+import top.yukonga.miuix.kmp.basic.RefreshState
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.SmallTitle
@@ -291,6 +294,20 @@ fun ModuleRepoScreenMiuix(
                                                 maxLines = 1
                                             )
                                         }
+                                        if (module.zygisk) {
+                                            Text(
+                                                text = "ZYGISK",
+                                                fontSize = 12.sp,
+                                                color = metaTint,
+                                                modifier = Modifier
+                                                    .padding(start = 6.dp)
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(metaBg)
+                                                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                                                fontWeight = FontWeight(750),
+                                                maxLines = 1
+                                            )
+                                        }
                                         Spacer(Modifier.weight(1f))
                                         if (module.stargazerCount > 0) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -349,61 +366,69 @@ fun ModuleRepoScreenMiuix(
         val offline = state.offline
 
         searchStatus.SearchBox {
-            if (!contentReady || isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(
-                            top = innerPadding.calculateTopPadding(),
-                            start = innerPadding.calculateStartPadding(layoutDirection),
-                            end = innerPadding.calculateEndPadding(layoutDirection),
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (offline) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = stringResource(R.string.network_offline),
-                                color = colorScheme.onSurfaceVariantSummary,
-                                fontSize = 16.sp
-                            )
-                            Spacer(Modifier.height(12.dp))
-                            TextButton(
-                                modifier = Modifier
-                                    .padding(horizontal = 24.dp)
-                                    .fillMaxWidth(),
-                                text = stringResource(R.string.network_retry),
-                                onClick = actions.onRefresh,
-                            )
+            val pullToRefreshState = rememberPullToRefreshState()
+            val lazyListState = rememberLazyListState()
+            val refreshTick = remember { mutableIntStateOf(0) }
+            val latestModules = rememberUpdatedState(state.modules)
+            val latestRefreshing = rememberUpdatedState(state.isRefreshing)
+            ScrollToTopOnChange(
+                lazyListState,
+                state.sortOrder,
+                refreshTick.intValue,
+                isBusy = { latestRefreshing.value },
+            ) { latestModules.value }
+            val refreshTexts = listOf(
+                stringResource(R.string.refresh_pulling),
+                stringResource(R.string.refresh_release),
+                stringResource(R.string.refresh_refresh),
+                stringResource(R.string.refresh_complete),
+            )
+            PullToRefresh(
+                isRefreshing = state.isRefreshing,
+                pullToRefreshState = pullToRefreshState,
+                onRefresh = {
+                    actions.onRefresh()
+                    refreshTick.intValue++
+                },
+                refreshTexts = refreshTexts,
+                contentPadding = PaddingValues(
+                    top = innerPadding.calculateTopPadding() + 6.dp,
+                    start = innerPadding.calculateStartPadding(layoutDirection),
+                    end = innerPadding.calculateEndPadding(layoutDirection)
+                ),
+            ) {
+                if (!contentReady || isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                top = innerPadding.calculateTopPadding(),
+                                start = innerPadding.calculateStartPadding(layoutDirection),
+                                end = innerPadding.calculateEndPadding(layoutDirection),
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (offline) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = stringResource(R.string.network_offline),
+                                    color = colorScheme.onSurfaceVariantSummary,
+                                    fontSize = 16.sp
+                                )
+                                Spacer(Modifier.height(12.dp))
+                                TextButton(
+                                    modifier = Modifier
+                                        .padding(horizontal = 24.dp)
+                                        .fillMaxWidth(),
+                                    text = stringResource(R.string.network_retry),
+                                    onClick = actions.onRefresh,
+                                )
+                            }
+                        } else if (pullToRefreshState.refreshState == RefreshState.Idle) {
+                            InfiniteProgressIndicator()
                         }
-                    } else {
-                        InfiniteProgressIndicator()
                     }
-                }
-            }
-            if (!isLoading && contentReady) {
-                val pullToRefreshState = rememberPullToRefreshState()
-                val lazyListState = rememberLazyListState()
-                LaunchedEffect(state.sortOrder) {
-                    lazyListState.scrollToItem(0)
-                }
-                val refreshTexts = listOf(
-                    stringResource(R.string.refresh_pulling),
-                    stringResource(R.string.refresh_release),
-                    stringResource(R.string.refresh_refresh),
-                    stringResource(R.string.refresh_complete),
-                )
-                PullToRefresh(
-                    isRefreshing = state.isRefreshing,
-                    pullToRefreshState = pullToRefreshState,
-                    onRefresh = actions.onRefresh,
-                    refreshTexts = refreshTexts,
-                    contentPadding = PaddingValues(
-                        top = innerPadding.calculateTopPadding() + 6.dp,
-                        start = innerPadding.calculateStartPadding(layoutDirection),
-                        end = innerPadding.calculateEndPadding(layoutDirection)
-                    ),
-                ) {
+                } else {
                     Box(modifier = if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier) {
                         LazyColumn(
                             state = lazyListState,
@@ -442,6 +467,20 @@ fun ModuleRepoScreenMiuix(
                                                 if (module.metamodule) {
                                                     Text(
                                                         text = "META",
+                                                        fontSize = 12.sp,
+                                                        color = metaTint,
+                                                        modifier = Modifier
+                                                            .padding(start = 6.dp)
+                                                            .clip(RoundedCornerShape(6.dp))
+                                                            .background(metaBg)
+                                                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                                                        fontWeight = FontWeight(750),
+                                                        maxLines = 1
+                                                    )
+                                                }
+                                                if (module.zygisk) {
+                                                    Text(
+                                                        text = "ZYGISK",
                                                         fontSize = 12.sp,
                                                         color = metaTint,
                                                         modifier = Modifier
@@ -1080,7 +1119,10 @@ fun ModuleRepoDetailScreenMiuix(
                             selectedTabIndex = pagerState.currentPage,
                             onTabSelected = { index ->
                                 coroutineScope.launch {
-                                    pagerState.animateScrollToPage(page = index, animationSpec = tween(easing = EaseInOut))
+                                    pagerState.animateScrollToPage(
+                                        page = index,
+                                        animationSpec = PagerNavigationSpringSpec,
+                                    )
                                 }
                             },
                             colors = TabRowDefaults.tabRowColors(
@@ -1098,6 +1140,7 @@ fun ModuleRepoDetailScreenMiuix(
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
+            overscrollEffect = null,
         ) { page ->
             val innerPadding = PaddingValues(
                 top = innerPadding.calculateTopPadding(),

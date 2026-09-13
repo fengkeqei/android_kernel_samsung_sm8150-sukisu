@@ -34,7 +34,7 @@ int ksu_handle_setresuid(uid_t old_uid, uid_t new_uid)
         spin_unlock_irq(&current->sighand->siglock);
 
         pr_info("install fd for manager: %d\n", new_uid);
-        ksu_install_fd();
+        ksu_install_fd(false);
         return 0;
     }
 

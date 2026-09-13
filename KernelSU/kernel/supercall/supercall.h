@@ -17,7 +17,7 @@ struct ksu_ioctl_cmd_map {
 };
 
 // Install KSU fd to current process
-int ksu_install_fd(void);
+int ksu_install_fd(bool close_on_exec);
 
 void ksu_supercalls_init(void);
 void ksu_supercalls_exit(void);

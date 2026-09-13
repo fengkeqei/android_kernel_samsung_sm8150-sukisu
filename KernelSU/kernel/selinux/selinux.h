@@ -19,7 +19,7 @@ typedef struct cred_security_struct taskcred_sec_t;
 #endif
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)) &&                         \
-	!defined(KSU_COMPAT_HAS_CURRENT_SID)
+	!defined(KSU_COMPAT_HAS_CURRENT_SID) && !defined(current_sid)
 static inline u32 current_sid(void)
 {
 	const struct task_security_struct *tsec = current_security();

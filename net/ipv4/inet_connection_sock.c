@@ -291,7 +291,6 @@ int inet_csk_get_port(struct sock *sk, unsigned short snum)
 	struct inet_bind_hashbucket *head;
 	struct net *net = sock_net(sk);
 	struct inet_bind_bucket *tb = NULL;
-	kuid_t uid = sock_i_uid(sk);
 
 	if (!port) {
 		head = inet_csk_find_open_port(sk, &tb, &port);
@@ -331,6 +330,23 @@ tb_found:
 			goto fail_unlock;
 	}
 success:
+	inet_csk_update_fastreuse(tb, sk);
+	if (!inet_csk(sk)->icsk_bind_hash)
+		inet_bind_hash(sk, tb, port);
+	WARN_ON(inet_csk(sk)->icsk_bind_hash != tb);
+	ret = 0;
+
+fail_unlock:
+	spin_unlock_bh(&head->lock);
+	return ret;
+}
+
+void inet_csk_update_fastreuse(struct inet_bind_bucket *tb,
+			       struct sock *sk)
+{
+	kuid_t uid = sock_i_uid(sk);
+	bool reuse = sk->sk_reuse && sk->sk_state != TCP_LISTEN;
+
 	if (hlist_empty(&tb->owners)) {
 		tb->fastreuse = reuse;
 		if (sk->sk_reuseport) {
@@ -374,14 +390,6 @@ success:
 			tb->fastreuseport = 0;
 		}
 	}
-	if (!inet_csk(sk)->icsk_bind_hash)
-		inet_bind_hash(sk, tb, port);
-	WARN_ON(inet_csk(sk)->icsk_bind_hash != tb);
-	ret = 0;
-
-fail_unlock:
-	spin_unlock_bh(&head->lock);
-	return ret;
 }
 EXPORT_SYMBOL_GPL(inet_csk_get_port);
 

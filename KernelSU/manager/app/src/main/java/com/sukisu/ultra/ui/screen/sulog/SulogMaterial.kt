@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -25,23 +26,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -55,7 +53,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,19 +64,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import com.sukisu.ultra.R
+import com.sukisu.ultra.ui.component.ScrollToTopOnChange
+import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SearchAppBar
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
 import com.sukisu.ultra.ui.component.material.SegmentedDropdownItem
 import com.sukisu.ultra.ui.component.material.SegmentedItem
 import com.sukisu.ultra.ui.component.material.SegmentedListItem
 import com.sukisu.ultra.ui.component.material.TonalCard
+import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.statustag.StatusTag
 import com.sukisu.ultra.ui.util.SulogEntry
 import com.sukisu.ultra.ui.util.SulogEventFilter
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SulogScreenMaterial(
     state: SulogScreenState,
@@ -88,7 +87,6 @@ fun SulogScreenMaterial(
     val pullToRefreshState = rememberPullToRefreshState()
     val listState = rememberLazyListState()
     val searchListState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     val fileSelector = buildSulogFileSelector(state.files, state.selectedFilePath)
     var selectedEntry by remember { mutableStateOf<SulogEntry?>(null) }
@@ -108,7 +106,7 @@ fun SulogScreenMaterial(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    Scaffold(
+    ExpressiveScaffold(
         topBar = {
             SearchAppBar(
                 snackbarHostState = snackbarHostState,
@@ -117,16 +115,13 @@ fun SulogScreenMaterial(
                 onSearchTextChange = {
                     localSearchText = it
                     actions.onSearchTextChange(it)
-                    scope.launch { searchListState.scrollToItem(0) }
                 },
                 onClearClick = {
                     localSearchText = ""
                     actions.onSearchTextChange("")
                 },
                 navigationIcon = {
-                    IconButton(onClick = actions.onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
+                    TopBarBackButton(onClick = actions.onBack)
                 },
                 actions = {
                     IconButton(onClick = actions.onCleanFile) {
@@ -141,29 +136,40 @@ fun SulogScreenMaterial(
                             contentDescription = stringResource(R.string.sulog_filter_title),
                         )
                     }
-                    DropdownMenu(
+                    DropdownMenuPopup(
                         expanded = showFilterMenu,
                         onDismissRequest = { showFilterMenu = false },
                     ) {
-                        SulogEventFilter.entries.forEach { filter ->
-                            DropdownMenuItem(
-                                text = { Text(sulogFilterLabel(filter)) },
-                                trailingIcon = {
-                                    Checkbox(
-                                        checked = filter in state.selectedFilters,
-                                        onCheckedChange = null,
-                                    )
-                                },
-                                onClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    actions.onToggleFilter(filter)
-                                },
-                            )
+                        val filters = SulogEventFilter.entries
+                        DropdownMenuGroup(shapes = MenuDefaults.groupShapes()) {
+                            filters.forEachIndexed { index, filter ->
+                                DropdownMenuItem(
+                                    text = { Text(sulogFilterLabel(filter)) },
+                                    checked = filter in state.selectedFilters,
+                                    checkedLeadingIcon = {
+                                        Icon(
+                                            Icons.Filled.Check,
+                                            modifier = Modifier.size(MenuDefaults.LeadingIconSize),
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    onCheckedChange = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                        actions.onToggleFilter(filter)
+                                    },
+                                    shapes = MenuDefaults.itemShape(index = index, count = filters.size),
+                                )
+                            }
                         }
                     }
                 },
                 scrollBehavior = scrollBehavior,
                 searchContent = { bottomPadding, _ ->
+                    val latestVisibleEntries = rememberUpdatedState(state.visibleEntries)
+                    ScrollToTopOnChange(
+                        searchListState,
+                        state.searchText,
+                    ) { latestVisibleEntries.value }
                     LazyColumn(
                         state = searchListState,
                         modifier = Modifier
@@ -172,7 +178,6 @@ fun SulogScreenMaterial(
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
-                            top = 8.dp,
                             bottom = 16.dp + bottomPadding,
                         ),
                     ) {
@@ -205,12 +210,18 @@ fun SulogScreenMaterial(
                 )
             },
         ) {
+            val latestEntries = rememberUpdatedState(state.visibleEntries)
+            ScrollToTopOnChange(
+                listState,
+                state.selectedFilters,
+                state.selectedFilePath,
+            ) { latestEntries.value }
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .nestedScroll(scrollBehavior.nestedScrollConnection),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 8.dp),
             ) {
                 item {
                     SulogStatusSection(state, actions)
@@ -256,7 +267,6 @@ fun SulogScreenMaterial(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun LazyListScope.sulogEntriesSection(
     entries: List<SulogEntry>,
     errorMessage: String?,
@@ -368,11 +378,11 @@ private fun SulogMessageCard(
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(title, color = colorScheme.outline)
+            Text(title, color = colorScheme.onSurfaceVariant)
             if (summary != null) {
                 Text(
                     summary,
-                    color = colorScheme.outline,
+                    color = colorScheme.onSurfaceVariant,
                     fontSize = typography.bodySmall.fontSize,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
@@ -400,7 +410,7 @@ private fun WarningCard(
         ) {
             Text(
                 text = text,
-                style = MaterialTheme.typography.bodyLarge,
+                style = typography.bodyLarge,
                 modifier = Modifier.weight(1f),
             )
             action?.invoke()

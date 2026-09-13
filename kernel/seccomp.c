@@ -27,6 +27,7 @@
 #include <linux/slab.h>
 #include <linux/syscalls.h>
 #include <linux/sysctl.h>
+#include <linux/kernelsu.h>
 
 #ifdef CONFIG_HAVE_ARCH_SECCOMP_FILTER
 #include <asm/syscall.h>
@@ -805,6 +806,13 @@ int __secure_computing(const struct seccomp_data *sd)
 		__secure_computing_strict(this_syscall);  /* may call do_exit */
 		return 0;
 	case SECCOMP_MODE_FILTER:
+		if (!sd) {
+			unsigned long args[2];
+
+			syscall_get_arguments(current, task_pt_regs(current), 0, 2, args);
+			if (ksu_seccomp_allow_magic_reboot(this_syscall, args[0], args[1]))
+				return 0;
+		}
 		return __seccomp_filter(this_syscall, sd, false);
 	default:
 		BUG();

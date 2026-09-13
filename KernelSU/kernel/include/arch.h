@@ -55,7 +55,6 @@
 #define SYS_READ_SYMBOL "__x64_sys_read"
 #define SYS_EXECVE_SYMBOL "__x64_sys_execve"
 #define SYS_FSTAT_SYMBOL "__x64_sys_newfstat"
-#define SYS_NI_SYMBOL "__x64_sys_ni_syscall"
 
 #else
 #error "Unsupported arch"

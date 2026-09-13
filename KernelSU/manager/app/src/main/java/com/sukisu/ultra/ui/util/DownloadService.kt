@@ -19,6 +19,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import com.sukisu.ultra.R
+import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.ksuApp
 import com.sukisu.ultra.ui.MainActivity
 import okhttp3.Request
@@ -36,12 +37,18 @@ class DownloadService : Service() {
         const val ACTION_DISMISS_DOWNLOAD = "com.sukisu.ultra.action.DISMISS_DOWNLOAD"
         const val ACTION_INSTALL_MODULE = "com.sukisu.ultra.action.INSTALL_MODULE"
         const val EXTRA_URL = "url"
+        const val EXTRA_TOKEN = "token"
         const val EXTRA_FILE_NAME = "fileName"
         const val EXTRA_DOWNLOAD_ID = "downloadId"
         const val EXTRA_MODULE_URI = "moduleUri"
         const val EXTRA_FILE_PATH = "filePath"
 
         private const val COMPLETION_NOTIFICATION_ID_BASE = 100000
+    }
+
+    private fun sanitizeFileName(raw: String): String {
+        val base = raw.substringAfterLast('/').substringAfterLast('\\')
+        return base.replace(Regex("[\\x00-\\x1F]"), "_").trim().ifBlank { "download.bin" }
     }
 
     private val activeJobs = ConcurrentHashMap<Int, Job>()
@@ -175,18 +182,23 @@ class DownloadService : Service() {
         directory: File,
         fileName: String
     ): File {
-        val dotIndex = fileName.lastIndexOf('.')
-        val baseName = if (dotIndex > 0) fileName.substring(0, dotIndex) else fileName
-        val extension = if (dotIndex > 0) fileName.substring(dotIndex) else ""
+        val safeFileName = sanitizeFileName(fileName)
+        val dotIndex = safeFileName.lastIndexOf('.')
+        val baseName = if (dotIndex > 0) safeFileName.substring(0, dotIndex) else safeFileName
+        val extension = if (dotIndex > 0) safeFileName.substring(dotIndex) else ""
+        val baseDir = directory.canonicalFile
 
         var index = 0
         while (true) {
             val candidateName = if (index == 0) {
-                fileName
+                safeFileName
             } else {
                 "$baseName ($index)$extension"
             }
-            val candidate = File(directory, candidateName)
+            val candidate = File(baseDir, candidateName).canonicalFile
+            if (!candidate.path.startsWith(baseDir.path + File.separator)) {
+                throw IOException("Refusing to write outside downloads directory")
+            }
             if (!candidate.exists()) {
                 return candidate
             }
@@ -228,6 +240,7 @@ class DownloadService : Service() {
             action = ACTION_INSTALL_MODULE
             putExtra(EXTRA_MODULE_URI, uri.toString())
             putExtra(EXTRA_DOWNLOAD_ID, id)
+            putExtra(EXTRA_TOKEN, SettingsRepositoryImpl().intentToken)
             addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         val installPendingIntent = PendingIntent.getActivity(

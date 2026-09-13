@@ -23,12 +23,12 @@
 #include "arch.h"
 #include "klog.h" // IWYU pragma: keep
 #include "ksu.h"
+#include "kernel_compat.h"
 #include "runtime/ksud.h"
 #include "runtime/ksud_boot.h"
 #include "selinux/selinux.h"
 #include "hook/syscall_hook.h"
 #include "hook/syscall_event_bridge.h"
-#include "kernel_compat.h"
 
 // clang-format off
 static const char KERNEL_SU_RC[] =
@@ -227,7 +227,7 @@ static void load_module_rc_once(void)
         return;
     }
 
-    old_cred = ksu_cred ? override_creds(ksu_cred) : NULL;
+    old_cred = override_creds(ksu_cred);
 
     f = open_module_rc(&path);
     if (IS_ERR(f)) {
@@ -268,8 +268,7 @@ out_close_file:
     filp_close(f, NULL);
 
 out_revert_creds:
-    if (old_cred)
-        revert_creds(old_cred);
+    revert_creds(old_cred);
 }
 
 static void free_module_rc(void)
@@ -521,11 +520,9 @@ bool ksu_is_safe_mode()
     return false;
 }
 
-void ksu_execve_hook_ksud(const struct pt_regs *regs)
+static void ksu_execve_hook_ksud_common(const char __user *filename_user, const char __user *const __user *argv_user)
 {
-    const char __user **filename_user = (const char **)&PT_REGS_PARM1(regs);
-    const char __user *const __user *__argv = (const char __user *const __user *)PT_REGS_PARM2(regs);
-    struct user_arg_ptr argv = { .ptr.native = __argv };
+    struct user_arg_ptr argv = { .ptr.native = argv_user };
     char path[32];
     long ret;
     unsigned long addr;
@@ -534,7 +531,7 @@ void ksu_execve_hook_ksud(const struct pt_regs *regs)
     if (!filename_user)
         return;
 
-    addr = untagged_addr((unsigned long)*filename_user);
+    addr = untagged_addr((unsigned long)filename_user);
     fn = (const char __user *)addr;
 
     memset(path, 0, sizeof(path));
@@ -545,6 +542,22 @@ void ksu_execve_hook_ksud(const struct pt_regs *regs)
     }
 
     ksu_handle_execveat_ksud(path, &argv);
+}
+
+void ksu_execve_hook_ksud(const struct pt_regs *regs)
+{
+    const char __user *filename_user = (const char __user *)PT_REGS_PARM1(regs);
+    const char __user *const __user *argv_user = (const char __user *const __user *)PT_REGS_PARM2(regs);
+
+    ksu_execve_hook_ksud_common(filename_user, argv_user);
+}
+
+void ksu_execveat_hook_ksud(const struct pt_regs *regs)
+{
+    const char __user *filename_user = (const char __user *)PT_REGS_PARM2(regs);
+    const char __user *const __user *argv_user = (const char __user *const __user *)PT_REGS_PARM3(regs);
+
+    ksu_execve_hook_ksud_common(filename_user, argv_user);
 }
 
 static void ksu_handle_sys_fstat(unsigned int fd, void __user *statbuf)
@@ -593,7 +606,8 @@ static long ksu_sys_read(unsigned long fd, unsigned long buf, unsigned long coun
     size_t *count_ptr = &count_size;
 
     ksu_handle_sys_read((unsigned int)fd, buf_ptr, count_ptr);
-    return orig_sys_read(fd, (unsigned long)*buf_ptr, *count_ptr, arg4, arg5, arg6);
+    return orig_sys_read(fd, (unsigned long)*buf_ptr, *count_ptr, arg4, arg5,
+                         arg6);
 }
 
 static long (*orig_sys_fstat)(unsigned long fd, unsigned long statbuf,
@@ -603,13 +617,10 @@ static long ksu_sys_fstat(unsigned long fd, unsigned long statbuf,
                           unsigned long arg3, unsigned long arg4,
                           unsigned long arg5, unsigned long arg6)
 {
-    long ret;
+    long ret = orig_sys_fstat(fd, statbuf, arg3, arg4, arg5, arg6);
 
-    ret = orig_sys_fstat(fd, statbuf, arg3, arg4, arg5, arg6);
-    if (ret < 0)
-        return ret;
-
-    ksu_handle_sys_fstat((unsigned int)fd, (void __user *)statbuf);
+    if (ret >= 0)
+        ksu_handle_sys_fstat((unsigned int)fd, (void __user *)statbuf);
     return ret;
 }
 #else
@@ -627,11 +638,40 @@ static long ksu_sys_read(const struct pt_regs *regs)
 static long (*orig_sys_fstat)(const struct pt_regs *regs);
 static long ksu_sys_fstat(const struct pt_regs *regs)
 {
-    long ret = orig_sys_fstat(regs);
+    unsigned int fd = PT_REGS_PARM1(regs);
+    void __user *statbuf = (void __user *)PT_REGS_PARM2(regs);
+    bool is_rc = false;
+    long ret;
 
-    if (ret >= 0)
-        ksu_handle_sys_fstat((unsigned int)PT_REGS_PARM1(regs),
-                             (void __user *)PT_REGS_PARM2(regs));
+    struct file *file = fget(fd);
+    if (file) {
+        if (is_init_rc(file)) {
+            pr_info("stat init.rc");
+            is_rc = true;
+            load_module_rc_once();
+        }
+        fput(file);
+    }
+
+    ret = orig_sys_fstat(regs);
+
+    if (is_rc) {
+        void __user *st_size_ptr = statbuf + offsetof(struct stat, st_size);
+        long size, new_size;
+        size_t extra = ksu_rc_len + module_rc_len;
+        if (!copy_from_user_nofault(&size, st_size_ptr, sizeof(long))) {
+            new_size = size + extra;
+            pr_info("adding rc len: %ld -> %ld (static=%zu module=%zu)", size, new_size, ksu_rc_len, module_rc_len);
+            if (!copy_to_user_nofault(st_size_ptr, &new_size, sizeof(long))) {
+                pr_info("added rc len");
+            } else {
+                pr_err("add rc len failed: statbuf 0x%lx", (unsigned long)st_size_ptr);
+            }
+        } else {
+            pr_err("read statbuf 0x%lx failed", (unsigned long)st_size_ptr);
+        }
+    }
+
     return ret;
 }
 #endif

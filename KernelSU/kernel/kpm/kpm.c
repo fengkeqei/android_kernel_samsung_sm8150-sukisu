@@ -35,7 +35,6 @@
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0) && defined(CONFIG_MODULES)
 #include <linux/moduleloader.h>
 #endif
-#include "../kernel_compat.h"
 #include "kpm.h"
 #include "compact.h"
 
@@ -127,28 +126,27 @@ noinline int sukisu_handle_kpm(unsigned long control_code, unsigned long arg1,
 {
     int res = -1;
     if (control_code == SUKISU_KPM_LOAD) {
-        char kernel_load_path[256] = { 0 };
-        char kernel_args_buffer[256] = { 0 };
+        char kernel_load_path[256];
+        char kernel_args_buffer[256];
 
         if (arg1 == 0) {
             res = -EINVAL;
             goto exit;
         }
 
-        if (!ksu_access_ok_read((void __user *)arg1, 255)) {
+        if (!access_ok(arg1, 255)) {
             goto invalid_arg;
         }
 
-        strncpy_from_user((char *)&kernel_load_path,
-                          (const char __user *)arg1, 255);
+        strncpy_from_user((char *)&kernel_load_path, (const char *)arg1, 255);
 
         if (arg2 != 0) {
-            if (!ksu_access_ok_read((void __user *)arg2, 255)) {
+            if (!access_ok(arg2, 255)) {
                 goto invalid_arg;
             }
 
-            strncpy_from_user((char *)&kernel_args_buffer,
-                              (const char __user *)arg2, 255);
+            strncpy_from_user((char *)&kernel_args_buffer, (const char *)arg2,
+                              255);
         }
 
         sukisu_kpm_load_module_path((const char *)&kernel_load_path,
@@ -162,13 +160,11 @@ noinline int sukisu_handle_kpm(unsigned long control_code, unsigned long arg1,
             goto exit;
         }
 
-        if (!ksu_access_ok_read((void __user *)arg1,
-                                sizeof(kernel_name_buffer))) {
+        if (!access_ok(arg1, sizeof(kernel_name_buffer))) {
             goto invalid_arg;
         }
 
-        strncpy_from_user((char *)&kernel_name_buffer,
-                          (const char __user *)arg1,
+        strncpy_from_user((char *)&kernel_name_buffer, (const char *)arg1,
                           sizeof(kernel_name_buffer));
 
         sukisu_kpm_unload_module((const char *)&kernel_name_buffer, NULL, &res);
@@ -184,8 +180,7 @@ noinline int sukisu_handle_kpm(unsigned long control_code, unsigned long arg1,
             goto exit;
         }
 
-        if (!ksu_access_ok_read((void __user *)arg1,
-                                sizeof(kernel_name_buffer))) {
+        if (!access_ok(arg1, sizeof(kernel_name_buffer))) {
             goto invalid_arg;
         }
 
@@ -196,11 +191,11 @@ noinline int sukisu_handle_kpm(unsigned long control_code, unsigned long arg1,
         sukisu_kpm_info((const char *)&kernel_name_buffer, (char *)&buf,
                         sizeof(buf), &size);
 
-        if (!ksu_access_ok_write((void __user *)arg2, size)) {
+        if (!access_ok(arg2, size)) {
             goto invalid_arg;
         }
 
-        res = copy_to_user((void __user *)arg2, &buf, size);
+        res = copy_to_user(arg2, &buf, size);
 
     } else if (control_code == SUKISU_KPM_LIST) {
         char buf[1024];
@@ -211,7 +206,7 @@ noinline int sukisu_handle_kpm(unsigned long control_code, unsigned long arg1,
             goto exit;
         }
 
-        if (!ksu_access_ok_write((void __user *)arg1, len)) {
+        if (!access_ok(arg2, len)) {
             goto invalid_arg;
         }
 
@@ -222,18 +217,18 @@ noinline int sukisu_handle_kpm(unsigned long control_code, unsigned long arg1,
             goto exit;
         }
 
-        if (copy_to_user((void __user *)arg1, &buf, len) != 0)
+        if (copy_to_user(arg1, &buf, len) != 0)
             pr_info("kpm: Copy to user failed.");
 
     } else if (control_code == SUKISU_KPM_CONTROL) {
         char kpm_name[KPM_NAME_LEN] = { 0 };
         char kpm_args[KPM_ARGS_LEN] = { 0 };
 
-        if (!ksu_access_ok_read((void __user *)arg1, sizeof(kpm_name))) {
+        if (!access_ok(arg1, sizeof(kpm_name))) {
             goto invalid_arg;
         }
 
-        if (!ksu_access_ok_read((void __user *)arg2, sizeof(kpm_args))) {
+        if (!access_ok(arg2, sizeof(kpm_args))) {
             goto invalid_arg;
         }
 
@@ -260,11 +255,11 @@ noinline int sukisu_handle_kpm(unsigned long control_code, unsigned long arg1,
         if (len >= outlen)
             len = outlen - 1;
 
-        res = copy_to_user((void __user *)arg1, &buffer, len + 1);
+        res = copy_to_user(arg1, &buffer, len + 1);
     }
 
 exit:
-    if (copy_to_user((void __user *)result_code, &res, sizeof(res)) != 0)
+    if (copy_to_user(result_code, &res, sizeof(res)) != 0)
         pr_info("kpm: Copy to user failed.");
 
     return 0;
@@ -293,13 +288,13 @@ int do_kpm(void __user *arg)
         return -EFAULT;
     }
 
-    if (!ksu_access_ok_read((void __user *)cmd.control_code, sizeof(int))) {
+    if (!access_ok(cmd.control_code, sizeof(int))) {
         pr_err("kpm: invalid control_code pointer %px\n",
                (void *)cmd.control_code);
         return -EFAULT;
     }
 
-    if (!ksu_access_ok_write((void __user *)cmd.result_code, sizeof(int))) {
+    if (!access_ok(cmd.result_code, sizeof(int))) {
         pr_err("kpm: invalid result_code pointer %px\n",
                (void *)cmd.result_code);
         return -EFAULT;

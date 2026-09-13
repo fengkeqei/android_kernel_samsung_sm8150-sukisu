@@ -1,6 +1,5 @@
 package com.sukisu.ultra.ui.screen.susfs.content
 
-import android.content.Context
 import androidx.compose.runtime.Composable
 import com.sukisu.ultra.ui.LocalUiMode
 import com.sukisu.ultra.ui.UiMode
@@ -20,7 +19,6 @@ fun BasicSettingsContent(
     isLoading: Boolean,
     onAutoStartToggle: (Boolean) -> Unit,
     onShowSlotInfo: () -> Unit,
-    context: Context,
     enableHideBl: Boolean,
     onEnableHideBlChange: (Boolean) -> Unit,
     enableCleanupResidue: Boolean,
@@ -29,6 +27,8 @@ fun BasicSettingsContent(
     onEnableAvcLogSpoofingChange: (Boolean) -> Unit,
     hideSusMountsForAllProcs: Boolean,
     onHideSusMountsForAllProcsChange: (Boolean) -> Unit,
+    cmdlineOrBootconfigPath: String = "",
+    onCmdlineOrBootconfigApply: (String) -> Unit = {},
     onReset: (() -> Unit)? = null,
     onApply: (() -> Unit)? = null,
     onConfigReload: () -> Unit
@@ -46,7 +46,6 @@ fun BasicSettingsContent(
             isLoading = isLoading,
             onAutoStartToggle = onAutoStartToggle,
             onShowSlotInfo = onShowSlotInfo,
-            context = context,
             enableHideBl = enableHideBl,
             onEnableHideBlChange = onEnableHideBlChange,
             enableCleanupResidue = enableCleanupResidue,
@@ -55,6 +54,8 @@ fun BasicSettingsContent(
             onEnableAvcLogSpoofingChange = onEnableAvcLogSpoofingChange,
             hideSusMountsForAllProcs = hideSusMountsForAllProcs,
             onHideSusMountsForAllProcsChange = onHideSusMountsForAllProcsChange,
+            cmdlineOrBootconfigPath = cmdlineOrBootconfigPath,
+            onCmdlineOrBootconfigApply = onCmdlineOrBootconfigApply,
             onReset = onReset,
             onApply = onApply,
             onConfigReload = onConfigReload
@@ -71,7 +72,6 @@ fun BasicSettingsContent(
             isLoading = isLoading,
             onAutoStartToggle = onAutoStartToggle,
             onShowSlotInfo = onShowSlotInfo,
-            context = context,
             enableHideBl = enableHideBl,
             onEnableHideBlChange = onEnableHideBlChange,
             enableCleanupResidue = enableCleanupResidue,
@@ -80,6 +80,8 @@ fun BasicSettingsContent(
             onEnableAvcLogSpoofingChange = onEnableAvcLogSpoofingChange,
             hideSusMountsForAllProcs = hideSusMountsForAllProcs,
             onHideSusMountsForAllProcsChange = onHideSusMountsForAllProcsChange,
+            cmdlineOrBootconfigPath = cmdlineOrBootconfigPath,
+            onCmdlineOrBootconfigApply = onCmdlineOrBootconfigApply,
             onReset = onReset,
             onApply = onApply,
             onConfigReload = onConfigReload

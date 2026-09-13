@@ -44,7 +44,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukisu.ultra.KernelVersion
+import com.sukisu.ultra.Natives
 import com.sukisu.ultra.R
+import com.sukisu.ultra.ui.component.WarningLevel
 import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
 import com.sukisu.ultra.ui.component.miuix.WarningCard
 import com.sukisu.ultra.ui.component.rebootlistpopup.RebootListPopupMiuix
@@ -110,16 +112,19 @@ fun HomePagerMiuix(
             ) {
                 item {
                     Column(
-                        modifier = Modifier.padding(vertical = 12.dp),
+                        modifier = Modifier.padding(top = 12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        if (state.showManagerPrBuildWarning) {
-                            WarningCard(stringResource(id = R.string.home_pr_build_warning))
-                        } else if (state.showKernelPrBuildWarning) {
-                            WarningCard(stringResource(id = R.string.home_pr_kernel_warning))
+                        if (state.checkUpdateEnabled) {
+                            UpdateCard(state = state, actions = actions)
                         }
-                        if (state.showVersionMismatchWarning) {
+                        if (state.showManagerPrBuildWarning && state.showFullStatus) {
+                            WarningCard(stringResource(id = R.string.home_pr_build_warning), level = WarningLevel.Notice)
+                        } else if (state.showKernelPrBuildWarning && state.showFullStatus) {
+                            WarningCard(stringResource(id = R.string.home_pr_kernel_warning), level = WarningLevel.Notice)
+                        }
+                        if (state.showVersionMismatchWarning && state.showFullStatus) {
                             WarningCard(
                                 stringResource(
                                     id = R.string.home_version_mismatch,
@@ -128,13 +133,33 @@ fun HomePagerMiuix(
                                 )
                             )
                         }
-                        if (state.showRequireKernelWarning) {
+                        if (state.showUAPIMisMatchWarning && state.showFullStatus) {
                             WarningCard(
                                 stringResource(
-                                    id = R.string.require_kernel_version,
-                                    state.ksuVersion ?: 0, com.sukisu.ultra.Natives.MINIMAL_SUPPORTED_KERNEL
-                                ),
+                                    id = R.string.uapi_mismatch,
+                                    state.managerUAPIVersion,
+                                    state.kernelUAPIVersion ?: 0,
+                                )
                             )
+                        }
+                        if (state.showRequireKernelWarning && state.showFullStatus) {
+                            if (state.currentManagerVersionCode < (state.ksuVersion ?: 0)) {
+                                WarningCard(
+                                    stringResource(
+                                        id = R.string.require_manager_version,
+                                        state.currentManagerVersionCode,
+                                        state.ksuVersion ?: 0,
+                                    )
+                                )
+                            } else {
+                                WarningCard(
+                                    stringResource(
+                                        id = R.string.require_kernel_version,
+                                        state.ksuVersion ?: 0,
+                                        Natives.MINIMAL_SUPPORTED_KERNEL
+                                    )
+                                )
+                            }
                         }
                         if (state.showRootWarning) {
                             WarningCard(stringResource(id = R.string.grant_root_failed))
@@ -143,14 +168,11 @@ fun HomePagerMiuix(
                             state = state,
                             actions = actions,
                         )
-                        if (state.checkUpdateEnabled) {
-                            UpdateCard(state = state, actions = actions)
-                        }
-                        InfoCard(systemInfo = state.systemInfo)
+                        InfoCard(systemInfo = state.systemInfo, showFullStatus = state.showFullStatus)
                         DonateCard(onOpenUrl = actions.onOpenUrl)
                         LearnMoreCard(onOpenUrl = actions.onOpenUrl)
+                        Spacer(Modifier.height(bottomInnerPadding))
                     }
-                    Spacer(Modifier.height(bottomInnerPadding))
                 }
             }
         }
@@ -174,7 +196,7 @@ private fun UpdateCard(
     ) {
         WarningCard(
             message = stringResource(id = R.string.new_version_available, newVersion.versionCode),
-            color = colorScheme.outline,
+            level = WarningLevel.Notice,
             onClick = {
                 if (newVersion.changelog.isEmpty()) {
                     actions.onOpenUrl(newVersion.downloadUrl)
@@ -226,23 +248,20 @@ private fun StatusCard(
                     }
                 }
                 val workingMode = when (state.lkmMode) {
-                    null -> ""
-                    true -> " <LKM>"
-                    else -> " <Built-in>"
+                    null -> null
+                    true -> "LKM"
+                    else -> "Built-in"
                 }
-                val workingText = "${stringResource(id = R.string.home_working)}$workingMode$workingState"
+                val workingText = "${stringResource(id = R.string.home_working)}$workingState"
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(IntrinsicSize.Min),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Card(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
+                        modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.defaultColors(
                             color = when {
                                 isDynamicColor -> colorScheme.secondaryContainer
@@ -258,15 +277,15 @@ private fun StatusCard(
                         showIndication = !state.isLateLoadMode,
                         pressFeedbackType = PressFeedbackType.Tilt
                     ) {
-                        Box(modifier = Modifier.fillMaxSize()) {
+                        Box {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .offset(38.dp, 45.dp),
+                                    .offset(27.dp, 31.dp),
                                 contentAlignment = Alignment.BottomEnd
                             ) {
                                 Icon(
-                                    modifier = Modifier.size(170.dp),
+                                    modifier = Modifier.size(110.dp),
                                     imageVector = Icons.Rounded.CheckCircleOutline,
                                     tint = if (isDynamicColor) {
                                         colorScheme.primary.copy(alpha = 0.8f)
@@ -276,83 +295,42 @@ private fun StatusCard(
                                     contentDescription = null
                                 )
                             }
-                            Column(
+                            if (workingMode != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(16.dp, 10.dp),
+                                    contentAlignment = Alignment.BottomStart,
+                                ) {
+                                    Text(
+                                        text = workingMode,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                }
+                            }
+                            Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(all = 16.dp)
+                                    .padding(16.dp, 14.dp),
+                                contentAlignment = Alignment.TopStart,
                             ) {
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = workingText,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Spacer(Modifier.height(2.dp))
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = stringResource(R.string.home_working_version, state.ksuVersion),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                    ) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            insideMargin = PaddingValues(16.dp),
-                            onClick = { actions.onSuperuserClick() },
-                            showIndication = true,
-                            pressFeedbackType = PressFeedbackType.Tilt
-                        ) {
-                            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = stringResource(R.string.superuser),
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 15.sp,
-                                    color = colorScheme.onSurfaceVariantSummary,
-                                )
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = state.superuserCount.toString(),
-                                    fontSize = 26.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colorScheme.onSurface,
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            insideMargin = PaddingValues(16.dp),
-                            onClick = { actions.onModuleClick() },
-                            showIndication = true,
-                            pressFeedbackType = PressFeedbackType.Tilt
-                        ) {
-                            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = stringResource(R.string.module),
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 15.sp,
-                                    color = colorScheme.onSurfaceVariantSummary,
-                                )
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = state.moduleCount.toString(),
-                                    fontSize = 26.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colorScheme.onSurface,
-                                )
+                                Column {
+                                    Text(
+                                        text = workingText,
+                                        fontSize = 22.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Spacer(Modifier.height(1.dp))
+                                    Text(
+                                        text = stringResource(
+                                            R.string.home_working_version,
+                                            "${state.ksuVersion}-${state.kernelUAPIVersion}"
+                                        ),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                }
                             }
                         }
                     }
@@ -465,7 +443,7 @@ private fun DonateCard(onOpenUrl: (String) -> Unit) {
 }
 
 @Composable
-private fun InfoCard(systemInfo: SystemInfo) {
+private fun InfoCard(systemInfo: SystemInfo, showFullStatus: Boolean = true) {
     val manualHookText = stringResource(R.string.manual_hook)
     val inlineHookText = stringResource(R.string.inline_hook)
     val tracepointHookText = stringResource(R.string.tracepoint_hook)
@@ -501,16 +479,31 @@ private fun InfoCard(systemInfo: SystemInfo) {
         ) {
             InfoText(title = stringResource(R.string.home_manager_version), content = systemInfo.managerVersion)
             InfoText(title = stringResource(R.string.home_kernel), content = systemInfo.kernelVersion)
-            InfoText(title = stringResource(R.string.home_device_model), content = systemInfo.deviceModel)
-            if (!systemInfo.kernelFullVersion.isNullOrBlank()) {
-                InfoText(title = stringResource(R.string.home_kernel_full_version), content = systemInfo.kernelFullVersion)
+
+            if (showFullStatus) {
+                if (!systemInfo.kernelFullVersion.isNullOrBlank()) {
+                    InfoText(
+                        title = stringResource(R.string.home_kernel_full_version),
+                        content = systemInfo.kernelFullVersion
+                    )
+                }
+                if (isSusfsSupported) {
+                    InfoText(
+                        title = stringResource(R.string.home_susfs_version),
+                        content = susfsInfo.detail
+                    )
+                } else if (!hookTypeLabel.isNullOrBlank()) {
+                    InfoText(title = stringResource(R.string.hook_type), content = hookTypeLabel)
+                }
+                if (!systemInfo.zygiskImplementation.isNullOrBlank()) {
+                    InfoText(
+                        title = stringResource(R.string.home_zygisk_implementation),
+                        content = systemInfo.zygiskImplementation
+                    )
+                }
+
             }
-            if (isSusfsSupported) {
-                InfoText(title = stringResource(R.string.home_susfs_version), content = susfsInfo.detail)
-            } else if (!hookTypeLabel.isNullOrBlank()) {
-                InfoText(title = stringResource(R.string.hook_type), content = hookTypeLabel)
-            }
-            InfoText(title = stringResource(R.string.home_fingerprint), content = systemInfo.fingerprint)
+
             val selinuxDisplay = when (systemInfo.selinuxStatus) {
                 "Enforcing" -> stringResource(R.string.selinux_status_enforcing)
                 "Permissive" -> stringResource(R.string.selinux_status_permissive)
@@ -519,24 +512,39 @@ private fun InfoCard(systemInfo: SystemInfo) {
             }
             InfoText(
                 title = stringResource(R.string.home_selinux_status),
-                content = selinuxDisplay,
+                content = selinuxDisplay
             )
-            val seccompDisplay = when (systemInfo.seccompStatus) {
-                -1 -> stringResource(R.string.seccomp_status_not_supported)
-                0 -> stringResource(R.string.seccomp_status_disabled)
-                1 -> stringResource(R.string.seccomp_status_strict)
-                2 -> stringResource(R.string.seccomp_status_filter)
-                else -> stringResource(R.string.seccomp_status_unknown)
+
+            if (showFullStatus) {
+                val seccompDisplay = when (systemInfo.seccompStatus) {
+                    -1 -> stringResource(R.string.seccomp_status_not_supported)
+                    0 -> stringResource(R.string.seccomp_status_disabled)
+                    1 -> stringResource(R.string.seccomp_status_strict)
+                    2 -> stringResource(R.string.seccomp_status_filter)
+                    else -> stringResource(R.string.seccomp_status_unknown)
+                }
+                InfoText(
+                    title = stringResource(R.string.home_seccomp_status),
+                    content = seccompDisplay,
+                )
             }
-            InfoText(
-                title = stringResource(R.string.home_seccomp_status),
-                content = seccompDisplay,
-            )
-            InfoText(
-                title = stringResource(R.string.home_fingerprint),
-                content = systemInfo.fingerprint,
-                bottomPadding = 0.dp
-            )
+
+
+            if (!showFullStatus) {
+                InfoText(
+                    title = stringResource(R.string.home_device_model),
+                    content = systemInfo.deviceModel,
+                    bottomPadding = 0.dp
+                )
+            }
+
+            if (showFullStatus) {
+                InfoText(
+                    title = stringResource(R.string.home_fingerprint),
+                    content = systemInfo.fingerprint,
+                    bottomPadding = 0.dp
+                )
+            }
         }
     }
 }
@@ -545,15 +553,15 @@ private fun InfoCard(systemInfo: SystemInfo) {
 @Composable
 private fun StatusCardActivatedPreview() {
     StatusCard(
-        state = previewHomeScreenState(ksuVersion = 12345, lkmMode = true, superuserCount = 5, moduleCount = 10),
-        actions = HomeActions({}, {}, {}, {})
+        state = previewHomeScreenState(ksuVersion = 12345, lkmMode = true),
+        actions = HomeActions({}, {})
     )
 }
 
 @Preview(name = "Not Activated")
 @Composable
 private fun StatusCardNotActivatedPreview() {
-    StatusCard(state = previewHomeScreenState(ksuVersion = null, lkmMode = null), actions = HomeActions({}, {}, {}, {}))
+    StatusCard(state = previewHomeScreenState(ksuVersion = null, lkmMode = null), actions = HomeActions({}, {}))
 }
 
 @Preview(name = "Permissive")
@@ -561,7 +569,7 @@ private fun StatusCardNotActivatedPreview() {
 private fun StatusCardPermissivePreview() {
     StatusCard(
         state = previewHomeScreenState(ksuVersion = null, lkmMode = null, selinuxStatus = "Permissive"),
-        actions = HomeActions({}, {}, {}, {})
+        actions = HomeActions({}, {})
     )
 }
 
@@ -569,8 +577,8 @@ private fun StatusCardPermissivePreview() {
 @Composable
 private fun StatusCardJailbreakPreview() {
     StatusCard(
-        state = previewHomeScreenState(ksuVersion = 12345, lkmMode = true, isLateLoadMode = true, superuserCount = 5, moduleCount = 10),
-        actions = HomeActions({}, {}, {}, {})
+        state = previewHomeScreenState(ksuVersion = 12345, lkmMode = true, isLateLoadMode = true),
+        actions = HomeActions({}, {})
     )
 }
 
@@ -594,8 +602,6 @@ private fun HomeScreenPreviewContent(
     lkmMode: Boolean?,
     isSafeMode: Boolean = false,
     isLateLoadMode: Boolean = false,
-    superuserCount: Int = 0,
-    moduleCount: Int = 0,
     selinuxStatus: String = "Enforcing",
 ) {
     CompositionLocalProvider(LocalUriHandler provides previewUriHandler) {
@@ -604,20 +610,18 @@ private fun HomeScreenPreviewContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            val actions = HomeActions({}, {}, {}, {})
+            val actions = HomeActions({}, {})
             StatusCard(
                 state = previewHomeScreenState(
                     ksuVersion = ksuVersion,
                     lkmMode = lkmMode,
                     isSafeMode = isSafeMode,
                     isLateLoadMode = isLateLoadMode,
-                    superuserCount = superuserCount,
-                    moduleCount = moduleCount,
                     selinuxStatus = selinuxStatus,
                 ),
                 actions = actions
             )
-            InfoCard(previewSystemInfo.copy(selinuxStatus = selinuxStatus))
+            InfoCard(previewSystemInfo.copy(selinuxStatus = selinuxStatus), showFullStatus = true)
             DonateCard(onOpenUrl = {})
             LearnMoreCard(onOpenUrl = {})
         }
@@ -627,7 +631,7 @@ private fun HomeScreenPreviewContent(
 @Preview(name = "Home Activated", showBackground = true)
 @Composable
 private fun HomeScreenActivatedPreview() {
-    HomeScreenPreviewContent(ksuVersion = 12345, lkmMode = true, superuserCount = 5, moduleCount = 10)
+    HomeScreenPreviewContent(ksuVersion = 12345, lkmMode = true)
 }
 
 @Preview(name = "Home Not Activated", showBackground = true)
@@ -645,7 +649,7 @@ private fun HomeScreenPermissivePreview() {
 @Preview(name = "Home Jailbreak", showBackground = true)
 @Composable
 private fun HomeScreenJailbreakPreview() {
-    HomeScreenPreviewContent(ksuVersion = 12345, lkmMode = true, isLateLoadMode = true, superuserCount = 5, moduleCount = 10)
+    HomeScreenPreviewContent(ksuVersion = 12345, lkmMode = true, isLateLoadMode = true)
 }
 
 private fun previewHomeScreenState(
@@ -653,8 +657,6 @@ private fun previewHomeScreenState(
     lkmMode: Boolean?,
     isSafeMode: Boolean = false,
     isLateLoadMode: Boolean = false,
-    superuserCount: Int = 0,
-    moduleCount: Int = 0,
     selinuxStatus: String = "Enforcing",
 ) = HomeUiState(
     kernelVersion = KernelVersion(6, 1, 0),
@@ -668,9 +670,11 @@ private fun previewHomeScreenState(
     isSafeMode = isSafeMode,
     isLateLoadMode = isLateLoadMode,
     checkUpdateEnabled = false,
+    showFullStatus = true,
     latestVersionInfo = LatestVersionInfo(),
     currentManagerVersionCode = 10000,
-    superuserCount = superuserCount,
-    moduleCount = moduleCount,
     systemInfo = previewSystemInfo.copy(selinuxStatus = selinuxStatus),
+    kernelUAPIVersion = 1,
+    managerUAPIVersion = 1,
+    uapiMismatch = false,
 )

@@ -44,6 +44,7 @@
 #include <linux/sched/debug.h>
 #include <linux/slab.h>
 #include <linux/compat.h>
+#include <linux/random.h>
 
 #ifdef CONFIG_SEC_DEBUG
 #include <linux/sec_debug.h>

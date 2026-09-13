@@ -16,3 +16,7 @@ obj-${TECHPACK} += stub/ $(addsuffix /,$(subst $(srctree)/techpack/,,$(techpack-
 
 techpack-header-dirs := $(shell find $(srctree)/techpack -maxdepth 1 -mindepth 1 -type d -not -name ".*")
 header-${TECHPACK} += $(addsuffix /include/uapi/,$(subst $(srctree)/techpack/,,$(techpack-header-dirs)))
+
+# 确保音频等 techpack 子目录的头文件路径在所有递归子 make 中可用
+LINUXINCLUDE += -I$(srctree)/techpack/audio/include/uapi -I$(srctree)/techpack/audio/include
+export LINUXINCLUDE

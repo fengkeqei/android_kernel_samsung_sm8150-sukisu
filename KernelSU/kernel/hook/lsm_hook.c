@@ -325,7 +325,6 @@ int ksu_lsm_hook(struct ksu_lsm_hook *hook)
                     ret = -EINVAL;
                     goto out_unlock;
                 }
-                // just check if already hooked
                 list_for_each_entry (entry, head, list) {
                     void **slot = (void **)((char *)entry + hook->hook_offset);
                     void *current_origin = READ_ONCE(*slot);
@@ -405,13 +404,12 @@ void ksu_lsm_unhook(struct ksu_lsm_hook *hook)
     slot = (void **)((char *)hook->entry + hook->hook_offset);
 #else
     if (hook->entry == &hook->list) {
-        pr_warn("lsm_hook: list_head inserted hook cannot be restored by slot patching\n");
+        pr_warn("lsm_hook: list_head insertion cannot be restored by slot patching\n");
         mutex_unlock(&ksu_lsm_hook_lock);
         return;
-    } else {
-        slot = (void **)((char *)hook->entry + hook->hook_offset);
-        pr_info("unhook patch slot\n");
     }
+    slot = (void **)((char *)hook->entry + hook->hook_offset);
+    pr_info("unhook patch slot\n");
 #endif
     if (ksu_lsm_hook_patch_slot(slot, hook->original)) {
         pr_err("lsm_hook: failed to restore %s\n", hook->head_name ?: "unknown");

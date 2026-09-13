@@ -20,13 +20,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.sukisu.ultra.R
 import com.sukisu.ultra.magica.MagicaService
-import com.sukisu.ultra.ui.LocalMainPagerState
 import com.sukisu.ultra.ui.LocalUiMode
 import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.dialog.rememberLoadingDialog
 import com.sukisu.ultra.ui.navigation3.Navigator
 import com.sukisu.ultra.ui.navigation3.Route
 import com.sukisu.ultra.ui.viewmodel.HomeViewModel
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun HomePager(
@@ -36,7 +36,6 @@ fun HomePager(
 ) {
     val viewModel = viewModel<HomeViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val mainState = LocalMainPagerState.current
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
     val loadingDialog = rememberLoadingDialog()
@@ -53,8 +52,6 @@ fun HomePager(
 
     val actions = HomeActions(
         onInstallClick = { navigator.push(Route.Install()) },
-        onSuperuserClick = { mainState.animateToPage(1) },
-        onModuleClick = { mainState.animateToPage(2) },
         onOpenUrl = uriHandler::openUri,
         onJailbreakClick = {
             loadingDialog.showLoading()
@@ -62,7 +59,7 @@ fun HomePager(
             // Manager will be force-stopped and restarted by late-load on success.
             // If that doesn't happen within timeout, jailbreak likely failed.
             scope.launch(Dispatchers.IO) {
-                delay(30_000)
+                delay(30_000.milliseconds)
                 withContext(Dispatchers.Main) {
                     loadingDialog.hide()
                     Toast.makeText(context, R.string.jailbreak_timeout, Toast.LENGTH_LONG).show()

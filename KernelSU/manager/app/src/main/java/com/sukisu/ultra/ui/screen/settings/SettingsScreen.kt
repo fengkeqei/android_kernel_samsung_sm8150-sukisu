@@ -39,6 +39,7 @@ fun SettingPager(
             viewModel.setUiMode(if (index == 0) UiMode.Miuix.value else UiMode.Material.value)
         },
         onOpenProfileTemplate = { navigator.push(Route.AppProfileTemplate) },
+        onSetLanguage = { tag -> viewModel.setLanguage(context, tag) },
         onSetSuCompatMode = viewModel::setSuCompatMode,
         onSetKernelUmountEnabled = viewModel::setKernelUmountEnabled,
         onSetSelinuxHideEnabled = viewModel::setSelinuxHideEnabled,
@@ -47,6 +48,7 @@ fun SettingPager(
         onSetDefaultUmountModules = viewModel::setDefaultUmountModules,
         onSetEnableWebDebugging = viewModel::setEnableWebDebugging,
         onSetAutoJailbreak = viewModel::setAutoJailbreak,
+        onSetUseSoftReboot = viewModel::setUseSoftReboot,
         onOpenAbout = { navigator.push(Route.About) },
         onSetAlternativeIcon = { enabled -> viewModel.setAlternativeIcon(context, enabled) },
         onOpenTools = { navigator.push(Route.Tool) },

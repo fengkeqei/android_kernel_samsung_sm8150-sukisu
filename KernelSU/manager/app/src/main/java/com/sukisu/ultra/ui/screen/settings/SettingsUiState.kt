@@ -8,6 +8,7 @@ import com.sukisu.ultra.ui.UiMode
 @Immutable
 data class SettingsUiState(
     val uiMode: String = UiMode.DEFAULT_VALUE,
+    val appLanguage: String = "",
     val checkUpdate: Boolean = true,
     val checkModuleUpdate: Boolean = true,
     val alternativeIcon : Boolean = false,
@@ -15,13 +16,15 @@ data class SettingsUiState(
     val miuixMonet: Boolean = false,
     val keyColor: Int = 0,
     val colorStyle: String = PaletteStyle.TonalSpot.name,
-    val colorSpec: String = ColorSpec.SpecVersion.Default.name,
+    val colorSpec: String = ColorSpec.SpecVersion.SPEC_2025.name,
     val enablePredictiveBack: Boolean = false,
     val enableBlur: Boolean = true,
     val enableFloatingBottomBar: Boolean = false,
     val enableFloatingBottomBarBlur: Boolean = false,
+    val enableNavigationBadge: Boolean = true,
     val pageScale: Float = 1.0f,
     val enableWebDebugging: Boolean = false,
+    val showFullStatus: Boolean = true,
 
     // Su Compat
     val suCompatStatus: String = "",
@@ -51,7 +54,10 @@ data class SettingsUiState(
     val isLateLoadMode: Boolean = false,
 
     // Auto Jailbreak
-    val autoJailbreak: Boolean = false
+    val autoJailbreak: Boolean = false,
+
+    // Soft Reboot
+    val useSoftReboot: Boolean = false
 )
 
 @Immutable
@@ -61,6 +67,7 @@ data class SettingsScreenActions(
     val onOpenTheme: () -> Unit,
     val onSetUiModeIndex: (Int) -> Unit,
     val onOpenProfileTemplate: () -> Unit,
+    val onSetLanguage: (String) -> Unit,
     val onSetSuCompatMode: (Int) -> Unit,
     val onSetKernelUmountEnabled: (Boolean) -> Unit,
     val onSetSelinuxHideEnabled: (Boolean) -> Unit,
@@ -69,6 +76,7 @@ data class SettingsScreenActions(
     val onSetDefaultUmountModules: (Boolean) -> Unit,
     val onSetEnableWebDebugging: (Boolean) -> Unit,
     val onSetAutoJailbreak: (Boolean) -> Unit,
+    val onSetUseSoftReboot: (Boolean) -> Unit,
     val onOpenAbout: () -> Unit,
     val onSetAlternativeIcon: (Boolean) -> Unit,
     val onOpenTools: () -> Unit,
