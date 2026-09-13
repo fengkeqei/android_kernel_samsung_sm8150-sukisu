@@ -2255,6 +2255,7 @@ static int bpf_skb_net_grow(struct sk_buff *skb, u32 len_diff)
 	return 0;
 }
 
+
 static int bpf_skb_net_shrink(struct sk_buff *skb, u32 len_diff)
 {
 	u32 off = skb_mac_header_len(skb) + bpf_skb_net_base_len(skb);
@@ -2443,6 +2444,7 @@ BPF_CALL_3(bpf_skb_change_head, struct sk_buff *, skb, u32, head_room,
 		__skb_push(skb, head_room);
 		memset(skb->data, 0, head_room);
 		skb_reset_mac_header(skb);
+		skb_reset_mac_len(skb);
 	}
 
 	bpf_compute_data_end(skb);

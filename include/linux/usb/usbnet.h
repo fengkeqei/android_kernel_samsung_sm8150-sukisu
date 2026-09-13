@@ -38,6 +38,8 @@ struct usbnet {
 	unsigned char		pkt_cnt, pkt_err;
 	unsigned short		rx_qlen, tx_qlen;
 	unsigned		can_dma_sg:1;
+	u32			rx_speed;
+	u32			tx_speed;
 
 	/* i/o info: pipes etc */
 	unsigned		in, out;
