@@ -26,12 +26,35 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
   CALL    /home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191/scripts/checksyscalls.sh
   CHK     include/generated/compile.h
   CHK     kernel/config_data.h
-  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150.dtb
-  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150-v2.dtb
+  CC      fs/ext4/namei.o
+  CC      fs/ext4/readpage.o
+  CC      fs/ext4/resize.o
+  CC      fs/ext4/super.o
+  CC      fs/ext4/symlink.o
+  CC      fs/ext4/sysfs.o
+  CC      fs/ext4/xattr.o
+  CC      fs/ext4/xattr_trusted.o
+  CC      fs/ext4/xattr_user.o
+  CC      fs/ext4/acl.o
+  CC      fs/ext4/xattr_security.o
   CC      techpack/audio/ipc/apr.o
   CC      techpack/audio/ipc/apr_v2.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150.dtb
+  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150-v2.dtb
   CC      techpack/audio/ipc/apr_tal_rpmsg.o
   CC      techpack/audio/ipc/wcd-dsp-glink.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r07.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r08.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r09.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r11.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r12.dtbo
+  AR      techpack/audio/ipc/apr_dlkm.o
+  AR      techpack/audio/ipc/wglink_dlkm.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r13.dtbo
+  AR      techpack/audio/ipc/built-in.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r14.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r16.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r17.dtbo
 -- SukiSU-Ultra version: 40900 [v4.2.0-85eb4a95]
 -- KernelSU Manager signature size: 0x35c
 -- KernelSU Manager signature hash: 947ae944f3de4ed4c21a7e4f7953ecf351bfa2b36239da37a34111ad29993eef
@@ -39,48 +62,11 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
 -- KERNEL_TYPE: Non-GKI
 -- KPM is disabled
 -- KSU_NEW_DCACHE_FLUSH: 0
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r07.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r08.dtbo
-  AR      techpack/audio/ipc/wglink_dlkm.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r09.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r11.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r12.dtbo
-  AR      techpack/audio/ipc/apr_dlkm.o
-  AR      techpack/audio/ipc/built-in.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r13.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r14.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r16.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r17.dtbo
-  CC      drivers/usb/core/usb.o
-  CC      drivers/usb/core/hub.o
-  CC      drivers/usb/core/hcd.o
-  CC      drivers/usb/notify/dock_notify.o
-  CC      drivers/usb/core/message.o
-  CC      drivers/usb/storage/transport.o
-  CC      drivers/usb/core/driver.o
-  CC      drivers/usb/core/config.o
-  CC      drivers/usb/core/file.o
-  CC      drivers/usb/core/buffer.o
-  CC      drivers/usb/core/sysfs.o
-  CC      drivers/usb/core/endpoint.o
-  CC      drivers/usb/core/devio.o
-  CC      drivers/usb/core/notify.o
-  CC      drivers/usb/core/generic.o
   AR      techpack/audio/built-in.o
   AR      techpack/built-in.o
-  CC      drivers/usb/core/quirks.o
-  CC      drivers/usb/core/devices.o
-  AR      drivers/usb/notify/usb_notify_layer.o
-  AR      drivers/usb/notify/built-in.o
-  CC      drivers/usb/core/port.o
-  CC      drivers/usb/core/of.o
-  CC      drivers/usb/core/hcd-pci.o
-  AR      drivers/usb/storage/usb-storage.o
-  AR      drivers/usb/storage/built-in.o
-  AR      drivers/usb/core/usbcore.o
-  AR      drivers/usb/core/built-in.o
-  AR      drivers/usb/built-in.o
-  AR      drivers/built-in.o
+  AR      fs/ext4/ext4.o
+  AR      fs/ext4/built-in.o
+  AR      fs/built-in.o
   GEN     .version
   CHK     include/generated/compile.h
   AR      built-in.o
@@ -93,11 +79,11 @@ WARNING: EXPORT symbol "gsi_write_channel_scratch" [vmlinux] version generation 
   SORTEX  vmlinux
   SYSMAP  System.map
   FIPS : Generating hmac of crypto and updating vmlinux... 
-HMAC for "crypto" module is: b'5c1028c45e572224c1ef3b091ca7cd030af5c805916021d763d5620a0c6d31dd'
+HMAC for "crypto" module is: b'0eb4defb019371ccb84ba60f2e671264064b3075b11c9a34b722cf8add62947c'
 FIPS integrity procedure has been finished for crypto
   OBJCOPY arch/arm64/boot/Image
-  DTC     arch/arm64/boot/dts/qcom/sm8150.dtb
   DTC     arch/arm64/boot/dts/qcom/sm8150-v2.dtb
+  DTC     arch/arm64/boot/dts/qcom/sm8150.dtb
 echo -n 'UNCOMPRESSED_IMG' > arch/arm64/boot/Image-dtb-hdr && \
 { dec_size=0; for F in  arch/arm64/boot/Image; do fsize=$(stat -c "%s" "$F"); dec_size=$((dec_size + fsize)); done; printf "%08x\n" $dec_size | sed 's/\(..\)/\1 /g' | { read ch0 ch1 ch2 ch3; for ch in $ch3 $ch2 $ch1 $ch0; do printf "\\$(printf '%03o' $((0x$ch)))"; done; }; } >> arch/arm64/boot/Image-dtb-hdr
   CAT     arch/arm64/boot/Image-dtb
