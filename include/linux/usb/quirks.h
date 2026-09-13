@@ -59,8 +59,8 @@
 
 /* Device needs a pause after every control message. */
 #define USB_QUIRK_DELAY_CTRL_MSG		BIT(13)
+#define USB_QUIRK_ENDPOINT_BLACKLIST	BIT(12)
 
 /* Hub can't support usb suspend */
 #define USB_QUIRK_HUB_NO_SUSPEND		BIT(20)
-
-#endif /* __LINUX_USB_QUIRKS_H */
+#endif
