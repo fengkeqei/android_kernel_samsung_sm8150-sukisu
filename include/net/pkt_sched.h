@@ -149,4 +149,6 @@ static inline bool is_classid_clsact_egress(u32 classid)
 	       TC_H_MIN(classid) == TC_H_MIN(TC_H_MIN_EGRESS);
 }
 
+extern const struct nla_policy rtm_tca_policy[TCA_MAX + 1];
+
 #endif
