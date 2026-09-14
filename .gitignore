@@ -2,4 +2,5 @@
 # build artifacts & logs
 build-sukisu-191.log
 build-*.log
-release/boot_4.14.*.img
+release/*.img
+release/*.zip
