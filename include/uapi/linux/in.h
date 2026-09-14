@@ -290,6 +290,8 @@ struct sockaddr_in {
 /* Defines for Multicast INADDR */
 #define INADDR_UNSPEC_GROUP   	0xe0000000U	/* 224.0.0.0   */
 #define INADDR_ALLHOSTS_GROUP 	0xe0000001U	/* 224.0.0.1   */
+/* dummy address. 12.11.10.9 */
+#define	INADDR_DUMMY		((unsigned long int) 0x0c0b0a09)
 #define INADDR_ALLRTRS_GROUP    0xe0000002U	/* 224.0.0.2 */
 #define INADDR_MAX_LOCAL_GROUP  0xe00000ffU	/* 224.0.0.255 */
 #endif
