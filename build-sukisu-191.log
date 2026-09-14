@@ -26,7 +26,6 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
   CALL    /home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191/scripts/checksyscalls.sh
   CHK     include/generated/compile.h
   CHK     kernel/config_data.h
-  CC      drivers/extcon/extcon.o
   DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150.dtb
   DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150-v2.dtb
   CC      techpack/audio/ipc/apr.o
@@ -40,22 +39,26 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
 -- KERNEL_TYPE: Non-GKI
 -- KPM is disabled
 -- KSU_NEW_DCACHE_FLUSH: 0
-  AR      drivers/extcon/extcon-core.o
-  AR      drivers/extcon/built-in.o
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r07.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r08.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r09.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r11.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r12.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r13.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r14.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r16.dtbo
-  AR      techpack/audio/ipc/apr_dlkm.o
   AR      techpack/audio/ipc/wglink_dlkm.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r17.dtbo
+  AR      techpack/audio/ipc/apr_dlkm.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r14.dtbo
   AR      techpack/audio/ipc/built-in.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r16.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r17.dtbo
+  CC      drivers/usb/host/xhci-hub.o
+  CC      drivers/usb/host/xhci-plat.o
   AR      techpack/audio/built-in.o
   AR      techpack/built-in.o
+  AR      drivers/usb/host/xhci-plat-hcd.o
+  AR      drivers/usb/host/xhci-hcd.o
+  AR      drivers/usb/host/built-in.o
+  AR      drivers/usb/built-in.o
   AR      drivers/built-in.o
   GEN     .version
   CHK     include/generated/compile.h
@@ -72,7 +75,7 @@ To see full details build your kernel with:
   SORTEX  vmlinux
   SYSMAP  System.map
   FIPS : Generating hmac of crypto and updating vmlinux... 
-HMAC for "crypto" module is: b'72ec32eb74abdb41b85f464b4d580fe8063c8192656ecc277f13b3407bb99945'
+HMAC for "crypto" module is: b'6c7a597de80690654dc051375a4fa7740d2e9fe5d4610e5368dac00bb0739b64'
 FIPS integrity procedure has been finished for crypto
   OBJCOPY arch/arm64/boot/Image
   DTC     arch/arm64/boot/dts/qcom/sm8150.dtb
@@ -82,4 +85,4 @@ echo -n 'UNCOMPRESSED_IMG' > arch/arm64/boot/Image-dtb-hdr && \
   CAT     arch/arm64/boot/Image-dtb
 make[1]: Leaving directory '/home/dev/Documents/Workspace/GalaxyS10/out-beyond1qlte-sukisu-191'
 make: Leaving directory '/home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191'
-[+] Image-dtb: /home/dev/Documents/Workspace/GalaxyS10/out-beyond1qlte-sukisu-191/arch/arm64/boot/Image-dtb (48105072 bytes)
+[+] Image-dtb: /home/dev/Documents/Workspace/GalaxyS10/out-beyond1qlte-sukisu-191/arch/arm64/boot/Image-dtb (48107120 bytes)
