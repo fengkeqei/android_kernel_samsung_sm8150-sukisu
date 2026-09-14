@@ -25,13 +25,16 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
   CHK     include/generated/asm-offsets.h
   CALL    /home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191/scripts/checksyscalls.sh
   CHK     include/generated/compile.h
+  CC      fs/file_table.o
   CHK     kernel/config_data.h
-  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150.dtb
-  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150-v2.dtb
+  AR      fs/built-in.o
   CC      techpack/audio/ipc/apr.o
   CC      techpack/audio/ipc/apr_v2.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150.dtb
+  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150-v2.dtb
   CC      techpack/audio/ipc/apr_tal_rpmsg.o
   CC      techpack/audio/ipc/wcd-dsp-glink.o
+  AR      techpack/audio/ipc/wglink_dlkm.o
 -- SukiSU-Ultra version: 40900 [v4.2.0-85eb4a95]
 -- KernelSU Manager signature size: 0x35c
 -- KernelSU Manager signature hash: 947ae944f3de4ed4c21a7e4f7953ecf351bfa2b36239da37a34111ad29993eef
@@ -42,20 +45,16 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r07.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r08.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r09.dtbo
+  AR      techpack/audio/ipc/apr_dlkm.o
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r11.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r12.dtbo
-  AR      techpack/audio/ipc/wglink_dlkm.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r13.dtbo
-  AR      techpack/audio/ipc/apr_dlkm.o
   AR      techpack/audio/ipc/built-in.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r13.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r14.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r16.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r17.dtbo
-  CC      drivers/pci/msi.o
   AR      techpack/audio/built-in.o
   AR      techpack/built-in.o
-  AR      drivers/pci/built-in.o
-  AR      drivers/built-in.o
   GEN     .version
   CHK     include/generated/compile.h
   AR      built-in.o
@@ -68,7 +67,7 @@ WARNING: EXPORT symbol "gsi_write_channel_scratch" [vmlinux] version generation 
   SORTEX  vmlinux
   SYSMAP  System.map
   FIPS : Generating hmac of crypto and updating vmlinux... 
-HMAC for "crypto" module is: b'7d6598b9a6cf6539cd035b06456aecd7292f86c30f637a24f52caa3d1c0a6d9e'
+HMAC for "crypto" module is: b'938bf00432d48bbb0ef520e07e54e41a00df1a602324b57ad179a25f7f14258c'
 FIPS integrity procedure has been finished for crypto
   OBJCOPY arch/arm64/boot/Image
   DTC     arch/arm64/boot/dts/qcom/sm8150.dtb
