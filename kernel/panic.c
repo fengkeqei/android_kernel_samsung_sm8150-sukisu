@@ -619,6 +619,13 @@ void warn_slowpath_null(const char *file, int line)
 EXPORT_SYMBOL(warn_slowpath_null);
 #endif
 
+void check_panic_on_warn(const char *origin)
+{
+	if (panic_on_warn)
+		panic("%s: panic_on_warn set ...\n", origin);
+}
+EXPORT_SYMBOL(check_panic_on_warn);
+
 #ifdef CONFIG_CC_STACKPROTECTOR
 
 /*
