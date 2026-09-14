@@ -4,3 +4,6 @@ build-sukisu-191.log
 build-*.log
 release/*.img
 release/*.zip
+
+__pycache__/
+*.pyc
