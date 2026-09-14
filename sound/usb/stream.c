@@ -243,8 +243,8 @@ static struct snd_pcm_chmap_elem *convert_chmap(int channels, unsigned int bits,
 		SNDRV_CHMAP_FR,		/* right front */
 		SNDRV_CHMAP_FC,		/* center front */
 		SNDRV_CHMAP_LFE,	/* LFE */
-		SNDRV_CHMAP_SL,		/* left surround */
-		SNDRV_CHMAP_SR,		/* right surround */
+		SNDRV_CHMAP_RL,		/* left surround */
+		SNDRV_CHMAP_RR,		/* right surround */
 		SNDRV_CHMAP_FLC,	/* left of center */
 		SNDRV_CHMAP_FRC,	/* right of center */
 		SNDRV_CHMAP_RC,		/* surround */
@@ -302,8 +302,7 @@ static struct snd_pcm_chmap_elem *convert_chmap(int channels, unsigned int bits,
 		case 2:
 			chmap->map[0] = SNDRV_CHMAP_FL;
 			chmap->map[1] = SNDRV_CHMAP_FR;
-			break;
-		}
+			break;		}
 	} else {
 		int c = 0;
 		const unsigned int *maps =
