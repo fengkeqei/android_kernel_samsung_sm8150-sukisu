@@ -25,15 +25,13 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
   CHK     include/generated/asm-offsets.h
   CALL    /home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191/scripts/checksyscalls.sh
   CHK     include/generated/compile.h
-  CC      kernel/panic.o
-  CC      kernel/exit.o
   CHK     kernel/config_data.h
-  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150.dtb
-  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150-v2.dtb
   CC      techpack/audio/ipc/apr.o
+  CC      net/ipv4/udplite.o
   CC      techpack/audio/ipc/apr_v2.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150.dtb
   CC      techpack/audio/ipc/apr_tal_rpmsg.o
-  AR      kernel/built-in.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150-v2.dtb
   CC      techpack/audio/ipc/wcd-dsp-glink.o
 -- SukiSU-Ultra version: 40900 [v4.2.0-85eb4a95]
 -- KernelSU Manager signature size: 0x35c
@@ -43,17 +41,21 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
 -- KPM is disabled
 -- KSU_NEW_DCACHE_FLUSH: 0
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r07.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r09.dtbo
+  AR      techpack/audio/ipc/apr_dlkm.o
+  CC      net/ipv4/proc.o
+  AR      techpack/audio/ipc/wglink_dlkm.o
+  AR      techpack/audio/ipc/built-in.o
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r08.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r09.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r11.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r12.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r13.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r14.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r16.dtbo
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r17.dtbo
-  AR      techpack/audio/ipc/apr_dlkm.o
-  AR      techpack/audio/ipc/wglink_dlkm.o
-  AR      techpack/audio/ipc/built-in.o
+  CC      net/ipv4/udp_diag.o
+  AR      net/ipv4/built-in.o
+  AR      net/built-in.o
   AR      techpack/audio/built-in.o
   AR      techpack/built-in.o
   GEN     .version
@@ -71,7 +73,7 @@ To see full details build your kernel with:
   SORTEX  vmlinux
   SYSMAP  System.map
   FIPS : Generating hmac of crypto and updating vmlinux... 
-HMAC for "crypto" module is: b'3f42e5c698e3b65a4d9146dfe416cbb8ad78551ddfc5a33f1a09fd8001663964'
+HMAC for "crypto" module is: b'690c007721468e898f116e92d9ab361e664bcfaaa1c7a3ce4ae36b4ff880985c'
 FIPS integrity procedure has been finished for crypto
   OBJCOPY arch/arm64/boot/Image
   DTC     arch/arm64/boot/dts/qcom/sm8150.dtb

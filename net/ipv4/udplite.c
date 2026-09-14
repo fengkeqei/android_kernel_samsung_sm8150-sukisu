@@ -15,6 +15,7 @@
 
 #include <linux/export.h>
 #include "udp_impl.h"
+#include <net/udplite.h>
 
 struct udp_table 	udplite_table __read_mostly;
 EXPORT_SYMBOL(udplite_table);

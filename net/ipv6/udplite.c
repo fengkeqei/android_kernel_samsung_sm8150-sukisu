@@ -13,6 +13,7 @@
  */
 #include <linux/export.h>
 #include "udp_impl.h"
+#include <net/udplite.h>
 
 static int udplitev6_rcv(struct sk_buff *skb)
 {
