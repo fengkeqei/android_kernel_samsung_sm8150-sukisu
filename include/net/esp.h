@@ -1,8 +1,13 @@
+#ifndef SKB_FRAG_PAGE_ORDER
+#define SKB_FRAG_PAGE_ORDER get_order(32768)
+#endif
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _NET_ESP_H
 #define _NET_ESP_H
 
 #include <linux/skbuff.h>
+
+#define ESP_SKB_FRAG_MAXSIZE (PAGE_SIZE << SKB_FRAG_PAGE_ORDER)
 
 struct ip_esp_hdr;
 

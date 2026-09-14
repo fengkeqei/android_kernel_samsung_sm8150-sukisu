@@ -26,159 +26,48 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
   CALL    /home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191/scripts/checksyscalls.sh
   CHK     include/generated/compile.h
   CHK     kernel/config_data.h
-  CC      fs/fuse/dir.o
-  CC      fs/kernfs/mount.o
-  CC      fs/nls/nls_base.o
-  CC      fs/kernfs/inode.o
-  CC      fs/nls/nls_cp437.o
-  CC      fs/fuse/file.o
-  CC      fs/notify/fsnotify.o
-  CC      fs/notify/notification.o
-  CC      fs/overlayfs/super.o
-  CC      fs/ntfs/aops.o
-  CC      fs/ntfs/attrib.o
-  CC      fs/kernfs/dir.o
-  CC      fs/notify/group.o
-  CC      fs/fuse/inode.o
-  CC      fs/fuse/control.o
-  CC      fs/kernfs/file.o
-  CC      fs/nls/nls_iso8859-1.o
-  CC      fs/notify/mark.o
-  CC      fs/fuse/xattr.o
-  CC      fs/overlayfs/namei.o
-  CC      fs/ntfs/collate.o
-  CC      fs/nls/nls_utf8.o
-  CC      fs/ntfs/compress.o
-  CC      fs/pstore/inode.o
-  CC      fs/pstore/platform.o
-  AR      fs/nls/built-in.o
-  CC      fs/notify/fdinfo.o
-  CC      fs/overlayfs/util.o
-  CC      fs/kernfs/symlink.o
-  CC      fs/proc/task_mmu.o
-  CC      fs/pstore/pmsg.o
-  CC      fs/quota/dquot.o
-  CC      fs/ramfs/inode.o
-  CC      fs/proc/inode.o
-  CC      fs/notify/dnotify/dnotify.o
-  AR      fs/kernfs/built-in.o
-  CC      fs/overlayfs/inode.o
-  CC      fs/ntfs/debug.o
-  CC      fs/fuse/acl.o
-  CC      fs/pstore/ss_platform_log.o
-  CC      fs/ramfs/file-mmu.o
-  AR      fs/notify/dnotify/built-in.o
-  CC      fs/ntfs/dir.o
-  CC      fs/notify/inotify/inotify_fsnotify.o
-  CC      fs/overlayfs/dir.o
-  CC      fs/notify/inotify/inotify_user.o
-  CC      fs/pstore/ram.o
-  AR      fs/fuse/fuse.o
-  AR      fs/fuse/built-in.o
-  AR      fs/ramfs/ramfs.o
-  CC      fs/proc/root.o
-  AR      fs/ramfs/built-in.o
-  CC      fs/quota/quota_v2.o
-  CC      fs/ntfs/file.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150.dtb
+  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150-v2.dtb
   CC      techpack/audio/ipc/apr.o
   CC      techpack/audio/ipc/apr_v2.o
-  CC      fs/pstore/ram_core.o
-  CC      fs/proc/base.o
-  CC      fs/quota/quota_tree.o
-  CC      fs/quota/quota.o
-  CC      fs/overlayfs/readdir.o
-  CC      fs/ntfs/index.o
-  AR      fs/notify/inotify/built-in.o
-  AR      fs/notify/built-in.o
-  CC      fs/proc/generic.o
-  CC      fs/proc/array.o
-  CC      fs/ntfs/inode.o
-  CC      fs/sdcardfs/dentry.o
-  CC      fs/ntfs/mft.o
-  AR      fs/pstore/pstore.o
-  AR      fs/pstore/ramoops.o
-  AR      fs/pstore/built-in.o
-  CC      fs/ntfs/mst.o
+  CC      net/ipv6/esp6.o
   CC      techpack/audio/ipc/apr_tal_rpmsg.o
-  CC      fs/sdcardfs/file.o
-  CC      fs/overlayfs/copy_up.o
-  CC      fs/sdcardfs/inode.o
-  CC      fs/quota/kqid.o
-  CC      fs/sdcardfs/main.o
-  CC      fs/sdfat/sdfat.o
+  CC      net/ipv4/esp4.o
+  CC      net/xfrm/xfrm_algo.o
   CC      techpack/audio/ipc/wcd-dsp-glink.o
-  CC      fs/ntfs/namei.o
-  CC      fs/proc/fd.o
-  CC      fs/sysfs/file.o
-  CC      fs/sdfat/core.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150.dtb
-  AR      fs/overlayfs/overlay.o
-  AR      fs/overlayfs/built-in.o
-  CC      fs/sdfat/core_fat.o
-  CC      fs/sdfat/core_exfat.o
-  CC      fs/quota/netlink.o
-  CC      fs/sdfat/api.o
-  CC      fs/ntfs/runlist.o
-  CC      fs/sdfat/blkdev.o
-  CC      fs/sdcardfs/super.o
-  AR      techpack/audio/ipc/apr_dlkm.o
-  CC      fs/proc/proc_tty.o
-  AR      techpack/audio/ipc/wglink_dlkm.o
-  AR      techpack/audio/ipc/built-in.o
-  CC      fs/sdfat/fatent.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150-v2.dtb
-  CC      fs/sysfs/dir.o
-  CC      fs/sdcardfs/lookup.o
-  CC      fs/ntfs/super.o
-  CC      fs/sdfat/amap_smart.o
-  CC      fs/ntfs/sysctl.o
-  CC      fs/proc/cmdline.o
-  CC      fs/tracefs/inode.o
-  CC      fs/sysfs/symlink.o
-  AR      fs/quota/built-in.o
-  CC      fs/sdcardfs/mmap.o
-  CC      fs/sdfat/cache.o
-  CC      fs/sdfat/dfr.o
-  CC      fs/eventpoll.o
-  CC      fs/proc/consoles.o
-  AR      techpack/audio/built-in.o
-  CC      fs/anon_inodes.o
-  AR      techpack/built-in.o
-  CC      fs/sysfs/mount.o
-  CC      fs/sdfat/nls.o
-  CC      fs/signalfd.o
-  CC      fs/sdcardfs/packagelist.o
-  CC      fs/proc/cpuinfo.o
-  CC      fs/ntfs/unistr.o
-  AR      fs/tracefs/tracefs.o
-  AR      fs/tracefs/built-in.o
-  CC      fs/sdcardfs/derived_perm.o
+  CC      net/ipv6/xfrm6_mode_tunnel.o
+  CC      net/ipv6/xfrm6_mode_beet.o
+  CC      net/ipv6/mip6.o
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r07.dtbo
-  CC      fs/sysfs/group.o
-  CC      fs/proc/devices.o
-  CC      fs/timerfd.o
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r08.dtbo
-  CC      fs/ntfs/upcase.o
+  CC      net/ipv4/ipconfig.o
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r09.dtbo
-  CC      fs/sdfat/misc.o
-  CC      fs/proc/interrupts.o
-  CC      fs/proc/loadavg.o
-  CC      fs/proc/meminfo.o
-  CC      fs/proc/stat.o
+  CC      net/ipv6/netfilter/ip6_tables.o
+  AR      techpack/audio/ipc/apr_dlkm.o
+  AR      techpack/audio/ipc/wglink_dlkm.o
+  CC      net/ipv6/netfilter/ip6table_filter.o
+  AR      techpack/audio/ipc/built-in.o
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r11.dtbo
-  CC      fs/sdfat/mpage.o
-  CC      fs/proc/uptime.o
-  CC      fs/eventfd.o
-  AR      fs/sysfs/built-in.o
-  AR      fs/ntfs/ntfs.o
-  AR      fs/ntfs/built-in.o
-  CC      fs/aio.o
-  CC      fs/sdfat/extent.o
-  CC      fs/locks.o
-  CC      fs/sdfat/statistics.o
-  CC      fs/proc/version.o
+  CC      net/ipv4/netfilter.o
+  CC      net/ipv6/netfilter/ip6table_mangle.o
+  CC      net/ipv6/ip6_vti.o
   DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r12.dtbo
-  CC      fs/compat.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r13.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r14.dtbo
+  CC      net/ipv4/netfilter/nf_conntrack_l3proto_ipv4.o
+  AR      net/xfrm/built-in.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r16.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r17.dtbo
+  CC      net/ipv6/netfilter/ip6table_raw.o
+  CC      net/ipv4/netfilter/nf_conntrack_proto_icmp.o
+  CC      net/ipv6/netfilter/ip6table_nat.o
+  CC      net/ipv6/sit.o
+  CC      net/ipv4/inet_diag.o
+  CC      net/ipv6/ip6_tunnel.o
+  CC      net/ipv6/addrconf_core.o
+  CC      net/ipv6/exthdrs_core.o
+  CC      net/ipv4/netfilter/nf_nat_l3proto_ipv4.o
+  CC      net/ipv6/netfilter/nf_conntrack_l3proto_ipv6.o
 -- SukiSU-Ultra version: 40900 [v4.2.0-85eb4a95]
 -- KernelSU Manager signature size: 0x35c
 -- KernelSU Manager signature hash: 947ae944f3de4ed4c21a7e4f7953ecf351bfa2b36239da37a34111ad29993eef
@@ -186,37 +75,72 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
 -- KERNEL_TYPE: Non-GKI
 -- KPM is disabled
 -- KSU_NEW_DCACHE_FLUSH: 0
-  CC      fs/proc/softirqs.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r13.dtbo
-  CC      fs/proc/namespaces.o
-  CC      fs/compat_ioctl.o
-  CC      fs/proc/self.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r14.dtbo
-  CC      fs/binfmt_script.o
-  CC      fs/proc/thread_self.o
-  CC      fs/proc/uid.o
-  AR      fs/sdfat/sdfat_fs.o
-  AR      fs/sdfat/built-in.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r16.dtbo
-  CC      fs/proc/fslog.o
-  CC      fs/binfmt_elf.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r17.dtbo
-  CC      fs/compat_binfmt_elf.o
-  CC      fs/proc/proc_sysctl.o
-  CC      fs/mbcache.o
-  CC      fs/posix_acl.o
-  CC      fs/proc/proc_net.o
-  CC      fs/proc/kmsg.o
-  CC      fs/coredump.o
-  CC      fs/proc/page.o
-  CC      fs/drop_caches.o
-  CC      fs/proc/proc_avc.o
-  CC      fs/dcookies.o
-  AR      fs/proc/proc.o
-  AR      fs/proc/built-in.o
-  AR      fs/sdcardfs/sdcardfs.o
-  AR      fs/sdcardfs/built-in.o
-  AR      fs/built-in.o
+  CC      net/ipv6/ip6_checksum.o
+  CC      net/ipv6/ip6_icmp.o
+  CC      net/ipv6/netfilter/nf_conntrack_proto_icmpv6.o
+  CC      net/ipv4/tcp_diag.o
+  CC      net/ipv6/output_core.o
+  CC      net/ipv4/udp_diag.o
+  CC      net/ipv4/netfilter/nf_nat_proto_icmp.o
+  CC      net/ipv4/netfilter/nf_defrag_ipv4.o
+  CC      net/ipv6/netfilter/nf_nat_l3proto_ipv6.o
+  CC      net/ipv6/netfilter/nf_nat_proto_icmpv6.o
+  CC      net/ipv4/tcp_bic.o
+  AR      techpack/audio/built-in.o
+  AR      techpack/built-in.o
+  CC      net/ipv4/tcp_cubic.o
+  CC      net/ipv6/netfilter/nf_defrag_ipv6_hooks.o
+  CC      net/ipv4/cipso_ipv4.o
+  CC      net/ipv6/netfilter/nf_conntrack_reasm.o
+  CC      net/ipv4/netfilter/nf_socket_ipv4.o
+  CC      net/ipv6/netfilter/nf_socket_ipv6.o
+  CC      net/ipv6/protocol.o
+  CC      net/ipv6/netfilter/nf_log_ipv6.o
+  CC      net/ipv6/netfilter/nf_reject_ipv6.o
+  CC      net/ipv4/xfrm4_policy.o
+  CC      net/ipv6/netfilter/nf_dup_ipv6.o
+  CC      net/ipv4/netfilter/nf_log_ipv4.o
+  CC      net/ipv4/netfilter/nf_reject_ipv4.o
+  CC      net/ipv6/netfilter/ip6t_rpfilter.o
+  CC      net/ipv4/xfrm4_state.o
+  CC      net/ipv4/netfilter/nf_nat_h323.o
+  CC      net/ipv6/ip6_offload.o
+  CC      net/ipv4/xfrm4_input.o
+  CC      net/ipv6/netfilter/ip6t_REJECT.o
+  CC      net/ipv4/netfilter/nf_nat_pptp.o
+  CC      net/ipv4/xfrm4_output.o
+  CC      net/ipv6/tcpv6_offload.o
+  AR      net/ipv6/netfilter/nf_conntrack_ipv6.o
+  AR      net/ipv6/netfilter/nf_nat_ipv6.o
+  CC      net/ipv4/xfrm4_protocol.o
+  CC      net/ipv6/exthdrs_offload.o
+  CC      net/ipv4/netfilter/nf_nat_masquerade_ipv4.o
+  AR      net/ipv6/netfilter/nf_defrag_ipv6.o
+  CC      net/ipv6/inet6_hashtables.o
+  CC      net/ipv4/netfilter/nf_nat_proto_gre.o
+  CC      net/ipv6/ip6_udp_tunnel.o
+  CC      net/ipv4/netfilter/ip_tables.o
+  AR      net/ipv6/netfilter/built-in.o
+  CC      net/ipv4/netfilter/iptable_filter.o
+  CC      net/ipv6/mcast_snoop.o
+  CC      net/ipv4/netfilter/iptable_mangle.o
+  CC      net/ipv4/netfilter/iptable_nat.o
+  CC      net/ipv4/netfilter/iptable_raw.o
+  CC      net/ipv4/netfilter/iptable_security.o
+  CC      net/ipv4/netfilter/ipt_ah.o
+  CC      net/ipv4/netfilter/ipt_rpfilter.o
+  CC      net/ipv4/netfilter/ipt_MASQUERADE.o
+  CC      net/ipv4/netfilter/ipt_REJECT.o
+  CC      net/ipv4/netfilter/arp_tables.o
+  CC      net/ipv4/netfilter/arpt_mangle.o
+  CC      net/ipv4/netfilter/arptable_filter.o
+  CC      net/ipv4/netfilter/nf_dup_ipv4.o
+  AR      net/ipv6/built-in.o
+  AR      net/ipv4/netfilter/nf_conntrack_ipv4.o
+  AR      net/ipv4/netfilter/nf_nat_ipv4.o
+  AR      net/ipv4/netfilter/built-in.o
+  AR      net/ipv4/built-in.o
+  AR      net/built-in.o
   GEN     .version
   CHK     include/generated/compile.h
   AR      built-in.o
@@ -229,7 +153,7 @@ WARNING: EXPORT symbol "gsi_write_channel_scratch" [vmlinux] version generation 
   SORTEX  vmlinux
   SYSMAP  System.map
   FIPS : Generating hmac of crypto and updating vmlinux... 
-HMAC for "crypto" module is: b'6b19d77e11978359de5f1b58084434986ced093f230c752cdace639789f8f6f6'
+HMAC for "crypto" module is: b'803e44291410a75227b8d912f1ffc762954bc3828701d80f662036b8e8e89eb1'
 FIPS integrity procedure has been finished for crypto
   OBJCOPY arch/arm64/boot/Image
   DTC     arch/arm64/boot/dts/qcom/sm8150.dtb
