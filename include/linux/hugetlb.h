@@ -607,6 +607,10 @@ static inline void hugetlb_count_sub(long l, struct mm_struct *mm)
 {
 }
 
+static inline void hugetlb_count_init(struct mm_struct *mm)
+{
+}
+
 static inline void set_huge_swap_pte_at(struct mm_struct *mm, unsigned long addr,
 					pte_t *ptep, pte_t pte, unsigned long sz)
 {
