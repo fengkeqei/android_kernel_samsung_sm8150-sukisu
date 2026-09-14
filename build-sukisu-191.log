@@ -26,48 +26,13 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
   CALL    /home/dev/Documents/Workspace/GalaxyS10/android_kernel_samsung_sm8150-sukisu-kexec-beyond1qlte-191/scripts/checksyscalls.sh
   CHK     include/generated/compile.h
   CHK     kernel/config_data.h
+  CC      drivers/extcon/extcon.o
   DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150.dtb
   DTC     arch/arm64/boot/dts/samsung/beyond/../../qcom/sm8150-v2.dtb
   CC      techpack/audio/ipc/apr.o
   CC      techpack/audio/ipc/apr_v2.o
-  CC      net/ipv6/esp6.o
   CC      techpack/audio/ipc/apr_tal_rpmsg.o
-  CC      net/ipv4/esp4.o
-  CC      net/xfrm/xfrm_algo.o
   CC      techpack/audio/ipc/wcd-dsp-glink.o
-  CC      net/ipv6/xfrm6_mode_tunnel.o
-  CC      net/ipv6/xfrm6_mode_beet.o
-  CC      net/ipv6/mip6.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r07.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r08.dtbo
-  CC      net/ipv4/ipconfig.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r09.dtbo
-  CC      net/ipv6/netfilter/ip6_tables.o
-  AR      techpack/audio/ipc/apr_dlkm.o
-  AR      techpack/audio/ipc/wglink_dlkm.o
-  CC      net/ipv6/netfilter/ip6table_filter.o
-  AR      techpack/audio/ipc/built-in.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r11.dtbo
-  CC      net/ipv4/netfilter.o
-  CC      net/ipv6/netfilter/ip6table_mangle.o
-  CC      net/ipv6/ip6_vti.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r12.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r13.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r14.dtbo
-  CC      net/ipv4/netfilter/nf_conntrack_l3proto_ipv4.o
-  AR      net/xfrm/built-in.o
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r16.dtbo
-  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r17.dtbo
-  CC      net/ipv6/netfilter/ip6table_raw.o
-  CC      net/ipv4/netfilter/nf_conntrack_proto_icmp.o
-  CC      net/ipv6/netfilter/ip6table_nat.o
-  CC      net/ipv6/sit.o
-  CC      net/ipv4/inet_diag.o
-  CC      net/ipv6/ip6_tunnel.o
-  CC      net/ipv6/addrconf_core.o
-  CC      net/ipv6/exthdrs_core.o
-  CC      net/ipv4/netfilter/nf_nat_l3proto_ipv4.o
-  CC      net/ipv6/netfilter/nf_conntrack_l3proto_ipv6.o
 -- SukiSU-Ultra version: 40900 [v4.2.0-85eb4a95]
 -- KernelSU Manager signature size: 0x35c
 -- KernelSU Manager signature hash: 947ae944f3de4ed4c21a7e4f7953ecf351bfa2b36239da37a34111ad29993eef
@@ -75,85 +40,39 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
 -- KERNEL_TYPE: Non-GKI
 -- KPM is disabled
 -- KSU_NEW_DCACHE_FLUSH: 0
-  CC      net/ipv6/ip6_checksum.o
-  CC      net/ipv6/ip6_icmp.o
-  CC      net/ipv6/netfilter/nf_conntrack_proto_icmpv6.o
-  CC      net/ipv4/tcp_diag.o
-  CC      net/ipv6/output_core.o
-  CC      net/ipv4/udp_diag.o
-  CC      net/ipv4/netfilter/nf_nat_proto_icmp.o
-  CC      net/ipv4/netfilter/nf_defrag_ipv4.o
-  CC      net/ipv6/netfilter/nf_nat_l3proto_ipv6.o
-  CC      net/ipv6/netfilter/nf_nat_proto_icmpv6.o
-  CC      net/ipv4/tcp_bic.o
+  AR      drivers/extcon/extcon-core.o
+  AR      drivers/extcon/built-in.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r07.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r08.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r09.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r11.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r12.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r13.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r14.dtbo
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r16.dtbo
+  AR      techpack/audio/ipc/apr_dlkm.o
+  AR      techpack/audio/ipc/wglink_dlkm.o
+  DTC     arch/arm64/boot/dts/samsung/beyond/sm8150-sec-beyond1qlte-overlay-r17.dtbo
+  AR      techpack/audio/ipc/built-in.o
   AR      techpack/audio/built-in.o
   AR      techpack/built-in.o
-  CC      net/ipv4/tcp_cubic.o
-  CC      net/ipv6/netfilter/nf_defrag_ipv6_hooks.o
-  CC      net/ipv4/cipso_ipv4.o
-  CC      net/ipv6/netfilter/nf_conntrack_reasm.o
-  CC      net/ipv4/netfilter/nf_socket_ipv4.o
-  CC      net/ipv6/netfilter/nf_socket_ipv6.o
-  CC      net/ipv6/protocol.o
-  CC      net/ipv6/netfilter/nf_log_ipv6.o
-  CC      net/ipv6/netfilter/nf_reject_ipv6.o
-  CC      net/ipv4/xfrm4_policy.o
-  CC      net/ipv6/netfilter/nf_dup_ipv6.o
-  CC      net/ipv4/netfilter/nf_log_ipv4.o
-  CC      net/ipv4/netfilter/nf_reject_ipv4.o
-  CC      net/ipv6/netfilter/ip6t_rpfilter.o
-  CC      net/ipv4/xfrm4_state.o
-  CC      net/ipv4/netfilter/nf_nat_h323.o
-  CC      net/ipv6/ip6_offload.o
-  CC      net/ipv4/xfrm4_input.o
-  CC      net/ipv6/netfilter/ip6t_REJECT.o
-  CC      net/ipv4/netfilter/nf_nat_pptp.o
-  CC      net/ipv4/xfrm4_output.o
-  CC      net/ipv6/tcpv6_offload.o
-  AR      net/ipv6/netfilter/nf_conntrack_ipv6.o
-  AR      net/ipv6/netfilter/nf_nat_ipv6.o
-  CC      net/ipv4/xfrm4_protocol.o
-  CC      net/ipv6/exthdrs_offload.o
-  CC      net/ipv4/netfilter/nf_nat_masquerade_ipv4.o
-  AR      net/ipv6/netfilter/nf_defrag_ipv6.o
-  CC      net/ipv6/inet6_hashtables.o
-  CC      net/ipv4/netfilter/nf_nat_proto_gre.o
-  CC      net/ipv6/ip6_udp_tunnel.o
-  CC      net/ipv4/netfilter/ip_tables.o
-  AR      net/ipv6/netfilter/built-in.o
-  CC      net/ipv4/netfilter/iptable_filter.o
-  CC      net/ipv6/mcast_snoop.o
-  CC      net/ipv4/netfilter/iptable_mangle.o
-  CC      net/ipv4/netfilter/iptable_nat.o
-  CC      net/ipv4/netfilter/iptable_raw.o
-  CC      net/ipv4/netfilter/iptable_security.o
-  CC      net/ipv4/netfilter/ipt_ah.o
-  CC      net/ipv4/netfilter/ipt_rpfilter.o
-  CC      net/ipv4/netfilter/ipt_MASQUERADE.o
-  CC      net/ipv4/netfilter/ipt_REJECT.o
-  CC      net/ipv4/netfilter/arp_tables.o
-  CC      net/ipv4/netfilter/arpt_mangle.o
-  CC      net/ipv4/netfilter/arptable_filter.o
-  CC      net/ipv4/netfilter/nf_dup_ipv4.o
-  AR      net/ipv6/built-in.o
-  AR      net/ipv4/netfilter/nf_conntrack_ipv4.o
-  AR      net/ipv4/netfilter/nf_nat_ipv4.o
-  AR      net/ipv4/netfilter/built-in.o
-  AR      net/ipv4/built-in.o
-  AR      net/built-in.o
+  AR      drivers/built-in.o
   GEN     .version
   CHK     include/generated/compile.h
   AR      built-in.o
   LD      vmlinux.o
   MODPOST vmlinux.o
 WARNING: EXPORT symbol "gsi_write_channel_scratch" [vmlinux] version generation failed, symbol will not be versioned.
+WARNING: modpost: Found 1 section mismatch(es).
+To see full details build your kernel with:
+'make CONFIG_DEBUG_SECTION_MISMATCH=y'
   KSYM    .tmp_kallsyms1.o
   KSYM    .tmp_kallsyms2.o
   LD      vmlinux
   SORTEX  vmlinux
   SYSMAP  System.map
   FIPS : Generating hmac of crypto and updating vmlinux... 
-HMAC for "crypto" module is: b'803e44291410a75227b8d912f1ffc762954bc3828701d80f662036b8e8e89eb1'
+HMAC for "crypto" module is: b'72ec32eb74abdb41b85f464b4d580fe8063c8192656ecc277f13b3407bb99945'
 FIPS integrity procedure has been finished for crypto
   OBJCOPY arch/arm64/boot/Image
   DTC     arch/arm64/boot/dts/qcom/sm8150.dtb
