@@ -332,7 +332,7 @@ static int bpf_map_mmap(struct file *filp, struct vm_area_struct *vma)
 	return map->ops->map_mmap(map, vma);
 }
 
-static __poll_t bpf_map_poll(struct file *filp,
+static unsigned int bpf_map_poll(struct file *filp,
 			     struct poll_table_struct *pts)
 {
 	struct bpf_map *map = filp->private_data;

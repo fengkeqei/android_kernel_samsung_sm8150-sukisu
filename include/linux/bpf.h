@@ -46,7 +46,7 @@ struct bpf_map_ops {
 	u32 (*map_gen_lookup)(struct bpf_map *map, struct bpf_insn *insn_buf);
 	u32 (*map_fd_sys_lookup_elem)(void *ptr);
 	int (*map_mmap)(struct bpf_map *map, struct vm_area_struct *vma);
-	__poll_t (*map_poll)(struct bpf_map *map, struct file *filp,
+	unsigned int (*map_poll)(struct bpf_map *map, struct file *filp,
 			     struct poll_table_struct *pts);
 };
 
