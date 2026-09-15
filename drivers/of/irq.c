@@ -664,6 +664,24 @@ struct irq_domain *of_msi_get_domain(struct device *dev,
 			return d;
 	}
 
+	/*
+	 * Legacy binding: msi-parent 指向不带 #msi-cells 的 MSI 控制器
+	 * （三星 DTS 的 qcom,pcie0_msi 即此形态）。此时上面的迭代器
+	 * 因读不到 #msi-cells 直接以 -EINVAL 退出，回退到单 phandle 查找。
+	 */
+	if (err == -EINVAL) {
+		struct device_node *msi_np = of_parse_phandle(np, "msi-parent", 0);
+
+		if (msi_np && !of_property_read_bool(msi_np, "#msi-cells")) {
+			d = irq_find_matching_host(msi_np, token);
+			if (!d)
+				of_node_put(msi_np);
+			return d;
+		}
+		if (msi_np)
+			of_node_put(msi_np);
+	}
+
 	return NULL;
 }
 
