@@ -16,6 +16,7 @@
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 #include <linux/binfmts.h>
+#include <linux/utsname.h>
 #include <linux/kernel.h>
 #include <linux/syscalls.h>
 #include <linux/stackprotector.h>
@@ -986,6 +987,17 @@ asmlinkage __visible void __init start_kernel(void)
 	if (efi_enabled(EFI_RUNTIME_SERVICES)) {
 		efi_free_boot_services();
 	}
+
+	/*
+	 * Android 15 (V) netbpfload 硬性要求 uname >= 4.19 (AOSP
+	 * packages/modules/Connectivity bpf/loader/NetBpfLoad.cpp 的
+	 * isAtLeastV 检查), 否则 return 1 -> init reboot_on_failure 循环.
+	 * 本内核本体/编译期宏/驱动版本判断保持 4.14.357 不变, 仅把
+	 * 用户态 uname 可见的 release 字符串伪装为 4.19, 使 4.14 设备
+	 * 能加载 Google 官方 A15 GSI (netbpfload 在 4.19 路径不要求 BTF).
+	 */
+	snprintf(init_uts_ns.name.release, __NEW_UTS_LEN + 1,
+		 "4.19.357-openela-fake");
 
 	/* Do the rest non-__init'ed, we're now alive */
 	rest_init();
