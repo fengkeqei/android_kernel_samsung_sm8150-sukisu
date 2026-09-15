@@ -3241,10 +3241,98 @@ bpf_base_func_proto(enum bpf_func_id func_id)
 	case BPF_FUNC_trace_printk:
 		if (capable(CAP_SYS_ADMIN))
 			return bpf_get_trace_printk_proto();
+	case BPF_FUNC_ktime_get_boot_ns:
+		return &bpf_ktime_get_boot_ns_stub_proto;
+	case BPF_FUNC_ringbuf_reserve:
+		return &bpf_ringbuf_reserve_stub_proto;
+	case BPF_FUNC_ringbuf_submit:
+		return &bpf_ringbuf_submit_stub_proto;
+	case BPF_FUNC_ringbuf_discard:
+		return &bpf_ringbuf_discard_stub_proto;
+	case BPF_FUNC_ringbuf_output:
+		return &bpf_ringbuf_output_stub_proto;
+	case BPF_FUNC_ringbuf_query:
+		return &bpf_ringbuf_query_stub_proto;
 	default:
 		return NULL;
 	}
 }
+
+/* Stubs for 5.x helpers referenced by A15 netd.o dead code paths.
+ * The verifier needs valid protos to accept programs; the stub
+ * functions return safe defaults (dead code never executes them). */
+static u64 bpf_ktime_get_boot_ns_stub(u64 unused, u64 u2, u64 u3, u64 u4, u64 u5)
+{
+	return ktime_get_boot_ns() - ktime_get_ns(); /* boot offset */
+}
+const struct bpf_func_proto bpf_ktime_get_boot_ns_stub_proto = {
+	.func		= bpf_ktime_get_boot_ns_stub,
+	.gpl_only	= false,
+	.ret_type	= RET_INTEGER,
+};
+
+static u64 bpf_ringbuf_reserve_stub(u64 map, u64 size, u64 flags, u64 u4, u64 u5)
+{
+	return 0; /* NULL = reservation failed, callers check */
+}
+const struct bpf_func_proto bpf_ringbuf_reserve_stub_proto = {
+	.func		= bpf_ringbuf_reserve_stub,
+	.gpl_only	= false,
+	.ret_type	= RET_PTR_TO_ALLOC_MEM_OR_NULL,
+	.arg1_type	= ARG_CONST_MAP_PTR,
+	.arg2_type	= ARG_ANYTHING,
+	.arg3_type	= ARG_ANYTHING,
+};
+
+static u64 bpf_ringbuf_submit_stub(u64 data, u64 flags, u64 u3, u64 u4, u64 u5)
+{
+	return 0;
+}
+const struct bpf_func_proto bpf_ringbuf_submit_stub_proto = {
+	.func		= bpf_ringbuf_submit_stub,
+	.gpl_only	= false,
+	.ret_type	= RET_VOID,
+	.arg1_type	= ARG_PTR_TO_ALLOC_MEM,
+	.arg2_type	= ARG_ANYTHING,
+};
+
+static u64 bpf_ringbuf_discard_stub(u64 data, u64 flags, u64 u3, u64 u4, u64 u5)
+{
+	return 0;
+}
+const struct bpf_func_proto bpf_ringbuf_discard_stub_proto = {
+	.func		= bpf_ringbuf_discard_stub,
+	.gpl_only	= false,
+	.ret_type	= RET_VOID,
+	.arg1_type	= ARG_PTR_TO_ALLOC_MEM,
+	.arg2_type	= ARG_ANYTHING,
+};
+
+static u64 bpf_ringbuf_output_stub(u64 map, u64 data, u64 size, u64 flags, u64 u5)
+{
+	return -EOPNOTSUPP;
+}
+const struct bpf_func_proto bpf_ringbuf_output_stub_proto = {
+	.func		= bpf_ringbuf_output_stub,
+	.gpl_only	= false,
+	.ret_type	= RET_INTEGER,
+	.arg1_type	= ARG_CONST_MAP_PTR,
+	.arg2_type	= ARG_PTR_TO_MEM,
+	.arg3_type	= ARG_CONST_SIZE_OR_ZERO,
+	.arg4_type	= ARG_ANYTHING,
+};
+
+static u64 bpf_ringbuf_query_stub(u64 map, u64 flags, u64 u3, u64 u4, u64 u5)
+{
+	return 0;
+}
+const struct bpf_func_proto bpf_ringbuf_query_stub_proto = {
+	.func		= bpf_ringbuf_query_stub,
+	.gpl_only	= false,
+	.ret_type	= RET_INTEGER,
+	.arg1_type	= ARG_CONST_MAP_PTR,
+	.arg2_type	= ARG_ANYTHING,
+};
 
 static const struct bpf_func_proto *
 sock_filter_func_proto(enum bpf_func_id func_id)
