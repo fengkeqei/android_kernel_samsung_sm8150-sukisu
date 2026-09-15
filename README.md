@@ -4,7 +4,15 @@
 将 Linux 4.14.190 基线逐步合并 kernel.org 4.14.y 稳定版补丁至 EOL 版本 **4.14.336**，
 每一步（207→217→…→317→336）均经真机刷入验证开机；
 随后追加合并 **OpenELA linux-4.14.y 扩展维护至 4.14.357-openela**（336→357 一次性合并，
-1503 文件干净应用 + 54 冲突三方/手工缝合，产物待真机验证）。
+1503 文件干净应用 + 54 冲突三方/手工缝合，**已真机验证开机**）。
+
+357 真机调平记录（两个开机阻断问题）：
+1. binder_alloc 三方合并静默丢了 down_read→down_write 改动，读写锁不对称致
+   binder 首次映射页挂死——修复为锁配对；
+2. 357 的 of/irq.c 用 of_for_each_phandle 解析 msi-parent，目标节点无 #msi-cells
+   （三星 DTS 形态）时直接 EINVAL 返回 NULL，桥设备 MSI 域为空，Wi-Fi 驱动注册
+   时 msm_msi_config_access NULL 解引用 panic（2 秒重启循环）——加 legacy 单
+   phandle 回退修复。
 
 > 本仓库为权威源：2026-09 的本地 `git-filter-repo` 事故后由 GitHub 同步恢复。
 
