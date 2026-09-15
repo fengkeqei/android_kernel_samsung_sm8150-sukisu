@@ -340,7 +340,7 @@ static unsigned int bpf_map_poll(struct file *filp,
 	if (map->ops->map_poll)
 		return map->ops->map_poll(map, filp, pts);
 
-	return EPOLLERR;
+	return -EIO;
 }
 
 const struct file_operations bpf_map_fops = {
