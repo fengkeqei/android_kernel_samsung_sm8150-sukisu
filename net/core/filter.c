@@ -4472,6 +4472,26 @@ const struct bpf_verifier_ops xdp_prog_ops = {
 	.test_run		= bpf_prog_test_run_xdp,
 };
 
+/* CGROUP_SOCK_ADDR: minimal ops for A15 netbpfload connect4/connect6 programs.
+ * Context is sockaddr; we accept all accesses and route helpers through
+ * sk_filter_func_proto (which includes our extended set). */
+static bool cg_sock_addr_is_valid_access(int off, int size,
+					  enum bpf_access_type type,
+					  struct bpf_insn_access_aux *info)
+{
+	/* Permissive: allow any aligned u32/u64 access to the sockaddr ctx */
+	if (off < 0 || off > 128)
+		return false;
+	if (type == BPF_WRITE)
+		return false;
+	return true;
+}
+
+const struct bpf_verifier_ops cg_sock_addr_prog_ops = {
+	.get_func_proto		= sk_filter_func_proto,
+	.is_valid_access	= cg_sock_addr_is_valid_access,
+};
+
 const struct bpf_verifier_ops cg_skb_prog_ops = {
 	.get_func_proto		= sk_filter_func_proto,
 	.is_valid_access	= sk_filter_is_valid_access,
