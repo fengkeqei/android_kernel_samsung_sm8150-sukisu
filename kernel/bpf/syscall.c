@@ -648,6 +648,11 @@ static int map_update_elem(union bpf_attr *attr)
 		goto err_put;
 	}
 
+	if (map->map_flags & BPF_F_RDONLY_PROG) {
+		err = -EPERM;
+		goto err_put;
+	}
+
 	key = memdup_user(ukey, map->key_size);
 	if (IS_ERR(key)) {
 		err = PTR_ERR(key);
@@ -733,6 +738,11 @@ static int map_delete_elem(union bpf_attr *attr)
 		return PTR_ERR(map);
 
 	if (!(f.file->f_mode & FMODE_CAN_WRITE)) {
+		err = -EPERM;
+		goto err_put;
+	}
+
+	if (map->map_flags & BPF_F_RDONLY_PROG) {
 		err = -EPERM;
 		goto err_put;
 	}

@@ -228,6 +228,15 @@ enum bpf_attach_type {
 #define BPF_F_RDONLY		(1U << 3)
 #define BPF_F_WRONLY		(1U << 4)
 
+/* BPF_F_RDONLY_PROG/BPF_F_WRONLY_PROG: eBPF program side read/write
+ * access (upstream 5.2, commit a6ed3ea65ab98c2bd270dcb318ea2dcb5a).
+ * netbpfload (Android 15) uses these for DEFINE_BPF_MAP_RO maps.
+ */
+#define BPF_F_RDONLY_PROG	(1U << 7)
+#define BPF_F_WRONLY_PROG	(1U << 8)
+#define BPF_F_ACCESS_MASK	(BPF_F_RDONLY | BPF_F_WRONLY | \
+				 BPF_F_RDONLY_PROG | BPF_F_WRONLY_PROG)
+
 union bpf_attr {
 	struct { /* anonymous struct used by BPF_MAP_CREATE command */
 		__u32	map_type;	/* one of enum bpf_map_type */
