@@ -38,3 +38,53 @@ unsigned long _copy_to_user(void __user *to, const void *from, unsigned long n)
 }
 EXPORT_SYMBOL(_copy_to_user);
 #endif
+
+/*
+ * check_zeroed_user: check if a userspace buffer only contains zero bytes
+ * @from: Source address, in userspace.
+ * @size: Size of buffer.
+ *
+ * 4.14 兼容版: LOS 原实现依赖 5.x 的 user_access_begin/unsafe_get_user,
+ * 这里用 __get_user 等价实现(语义相同, 无 unsafe 优化)。
+ *
+ * Returns:
+ *  * 0: There were non-zero bytes present in the buffer.
+ *  * 1: The buffer was full of zero bytes.
+ *  * -EFAULT: access to userspace failed.
+ */
+int check_zeroed_user(const void __user *from, size_t size)
+{
+	unsigned long val;
+	uintptr_t align = (uintptr_t)from % sizeof(unsigned long);
+
+	if (unlikely(size == 0))
+		return 1;
+
+	from -= align;
+	size += align;
+
+	if (!access_ok(VERIFY_READ, from, size))
+		return -EFAULT;
+
+	if (__get_user(val, (unsigned long __user *)from))
+		return -EFAULT;
+	if (align)
+		val &= ~aligned_byte_mask(align);
+
+	while (size > sizeof(unsigned long)) {
+		if (unlikely(val))
+			goto done;
+
+		from += sizeof(unsigned long);
+		size -= sizeof(unsigned long);
+
+		if (__get_user(val, (unsigned long __user *)from))
+			return -EFAULT;
+	}
+
+	if (size < sizeof(unsigned long))
+		val &= aligned_byte_mask(size);
+
+done:
+	return (val == 0);
+}

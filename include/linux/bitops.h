@@ -255,4 +255,9 @@ extern unsigned long find_last_bit(const unsigned long *addr,
 #endif
 
 #endif /* __KERNEL__ */
+
+#ifndef aligned_byte_mask
+#  define aligned_byte_mask(n) ((1UL << 8*(n))-1)
+#endif
+
 #endif

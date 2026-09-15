@@ -739,7 +739,7 @@ __SYSCALL(__NR_pidfd_open, sys_pidfd_open)
 #define __NR_clone3 435
 __SYSCALL(__NR_clone3, sys_clone3)
 #undef __NR_syscalls
-#define __NR_syscalls 435
+#define __NR_syscalls 436
 
 /*
  * All syscalls below here should go away really,
