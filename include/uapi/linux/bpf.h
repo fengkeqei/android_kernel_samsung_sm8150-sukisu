@@ -207,6 +207,10 @@ enum bpf_attach_type {
 #define BPF_F_TEST_RND_HI32		(1U << 2)  /* 5.0 */
 #define BPF_F_SLEEPABLE			(1U << 4)  /* 5.10 */
 
+/* User return codes for BPF_PROG_TYPE_CGROUP_SKB */
+#define BPF_HDR_START_MAC	0
+#define BPF_HDR_START_NET	1
+
 #define BPF_PSEUDO_MAP_FD	1
 
 /* flags for BPF_MAP_UPDATE_ELEM command */

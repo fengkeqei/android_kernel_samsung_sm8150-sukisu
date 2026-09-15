@@ -1510,6 +1510,38 @@ static const struct bpf_func_proto bpf_skb_load_bytes_proto = {
 	.arg4_type	= ARG_CONST_SIZE,
 };
 
+BPF_CALL_5(bpf_skb_load_bytes_relative, const struct sk_buff *, skb,
+	   u32, offset, void *, to, u32, len, u32, start_header)
+{
+	u32 start = 0;
+
+	switch (start_header) {
+	case BPF_HDR_START_MAC:
+		if (unlikely(!skb_mac_header_was_set(skb)))
+			return -EFAULT;
+		start = skb_mac_header(skb) - skb->data;
+		break;
+	case BPF_HDR_START_NET:
+		start = skb_network_offset(skb);
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	return skb_copy_bits(skb, start + offset, to, len);
+}
+
+static const struct bpf_func_proto bpf_skb_load_bytes_relative_proto = {
+	.func		= bpf_skb_load_bytes_relative,
+	.gpl_only	= false,
+	.ret_type	= RET_INTEGER,
+	.arg1_type	= ARG_PTR_TO_CTX,
+	.arg2_type	= ARG_ANYTHING,
+	.arg3_type	= ARG_PTR_TO_UNINIT_MEM,
+	.arg4_type	= ARG_CONST_SIZE,
+	.arg5_type	= ARG_ANYTHING,
+};
+
 BPF_CALL_2(bpf_skb_pull_data, struct sk_buff *, skb, u32, len)
 {
 	/* Idea is the following: should the needed direct read/write
@@ -3354,6 +3386,8 @@ sk_filter_func_proto(enum bpf_func_id func_id)
 	switch (func_id) {
 	case BPF_FUNC_skb_load_bytes:
 		return &bpf_skb_load_bytes_proto;
+	case BPF_FUNC_skb_load_bytes_relative:
+		return &bpf_skb_load_bytes_relative_proto;
 	case BPF_FUNC_get_socket_cookie:
 		return &bpf_get_socket_cookie_proto;
 	case BPF_FUNC_get_socket_uid:
