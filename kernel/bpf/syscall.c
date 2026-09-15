@@ -1122,6 +1122,11 @@ static int bpf_prog_load(union bpf_attr *attr)
 	char license[128];
 	bool is_gpl;
 
+	/* A15 netd.o passes prog_type from AOSP 6.x headers (CGROUP_SOCK_ADDR=18,
+	 * CGROUP_SOCKOPT=25). Map to closest 4.14 types so programs can load. */
+	if (type == 18 || type == 25)
+		type = BPF_PROG_TYPE_CGROUP_SOCK;
+
 	if (CHECK_ATTR(BPF_PROG_LOAD))
 		return -EINVAL;
 
