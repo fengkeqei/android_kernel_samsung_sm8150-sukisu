@@ -1125,7 +1125,10 @@ static int bpf_prog_load(union bpf_attr *attr)
 	if (CHECK_ATTR(BPF_PROG_LOAD))
 		return -EINVAL;
 
-	if (attr->prog_flags & ~BPF_F_STRICT_ALIGNMENT)
+	/* Accept flags from newer kernels (5.0+) that A15 netbpfload
+	 * may pass. They are hints, not hard requirements. */
+	if (attr->prog_flags & ~(BPF_F_STRICT_ALIGNMENT |
+				 BPF_F_TEST_RND_HI32 | BPF_F_SLEEPABLE))
 		return -EINVAL;
 
 	/* copy eBPF program license from user space */

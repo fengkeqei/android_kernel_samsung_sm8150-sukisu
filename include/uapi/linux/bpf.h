@@ -204,6 +204,8 @@ enum bpf_attach_type {
  * and NET_IP_ALIGN defined to 2.
  */
 #define BPF_F_STRICT_ALIGNMENT	(1U << 0)
+#define BPF_F_TEST_RND_HI32		(1U << 2)  /* 5.0 */
+#define BPF_F_SLEEPABLE			(1U << 4)  /* 5.10 */
 
 #define BPF_PSEUDO_MAP_FD	1
 
