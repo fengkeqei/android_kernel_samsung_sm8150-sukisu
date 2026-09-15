@@ -385,7 +385,7 @@ int bpf_get_file_flag(int flags)
 		   offsetof(union bpf_attr, CMD##_LAST_FIELD) - \
 		   sizeof(attr->CMD##_LAST_FIELD)) != NULL
 
-#define BPF_MAP_CREATE_LAST_FIELD numa_node
+#define BPF_MAP_CREATE_LAST_FIELD map_ifindex
 /* called via syscall */
 static int map_create(union bpf_attr *attr)
 {
