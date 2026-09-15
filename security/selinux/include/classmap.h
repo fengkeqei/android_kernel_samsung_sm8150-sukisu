@@ -29,7 +29,8 @@
 		"wake_alarm", "block_suspend", "audit_read", "perfmon", "bpf", \
 		"checkpoint_restore"
 
-#if CAP_LAST_CAP > CAP_CHECKPOINT_RESTORE#error New capability defined, please update COMMON_CAP2_PERMS.
+#if CAP_LAST_CAP > CAP_CHECKPOINT_RESTORE
+#error New capability defined, please update COMMON_CAP2_PERMS.
 #endif
 
 /*
