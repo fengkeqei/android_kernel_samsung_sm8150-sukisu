@@ -238,6 +238,7 @@ enum bpf_attach_type {
 				 BPF_F_RDONLY_PROG | BPF_F_WRONLY_PROG)
 
 #define BPF_MAP_NAME_LEN 16
+#define BPF_PROG_NAME_LEN 16
 
 union bpf_attr {
 	struct { /* anonymous struct used by BPF_MAP_CREATE command */
