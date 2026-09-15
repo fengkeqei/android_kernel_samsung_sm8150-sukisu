@@ -1,20 +1,9 @@
 # android_kernel_samsung_sm8150-sukisu
 
-三星 Galaxy S10 国行（SM-G9730 / beyond1qlte，SM8150）内核，基于 SukiSU-Ultra v4.2.0 树，
+三星 Galaxy S10 国行（SM-G9730 / beyond1qlte，SM8150）内核,
 将 Linux 4.14.190 基线逐步合并 kernel.org 4.14.y 稳定版补丁至 EOL 版本 **4.14.336**，
 每一步（207→217→…→317→336）均经真机刷入验证开机；
-随后追加合并 **OpenELA linux-4.14.y 扩展维护至 4.14.357-openela**（336→357 一次性合并，
-1503 文件干净应用 + 54 冲突三方/手工缝合，**已真机验证开机**）。
-
-357 真机调平记录（两个开机阻断问题）：
-1. binder_alloc 三方合并静默丢了 down_read→down_write 改动，读写锁不对称致
-   binder 首次映射页挂死——修复为锁配对；
-2. 357 的 of/irq.c 用 of_for_each_phandle 解析 msi-parent，目标节点无 #msi-cells
-   （三星 DTS 形态）时直接 EINVAL 返回 NULL，桥设备 MSI 域为空，Wi-Fi 驱动注册
-   时 msm_msi_config_access NULL 解引用 panic（2 秒重启循环）——加 legacy 单
-   phandle 回退修复。
-
-> 本仓库为权威源：2026-09 的本地 `git-filter-repo` 事故后由 GitHub 同步恢复。
+随后追加合并 **OpenELA linux-4.14.y 扩展维护至 4.14.357-openela**
 
 ## 编译链
 
@@ -43,29 +32,3 @@
 3. KNOX warranty void 会导致偶发开机引导页重现、开发者模式被关、预装应用恢复，属正常现象；
 4. 常备一个已验证可开机的 boot.img 以便 TWRP 恢复。
 
-## 提交链（全部实测可开机）
-
-```
-0719367d8  基线（sukisu v4.2.0 / 4.14.190）
-7d6fa61a3  合并到207 → f15de6199 217 → 26e332b5d 227 → 6cea0638a 237
-526ab8e2c 247-core → 933c7351a 247+fs → e46c3e03e 247+fs+net → 0771bccad 247-近完整
-98bcaa7de 257 → 17f5da2e2 267 → ac04c4bed 277 → eab5e7c9b 287（extcon.c 保持 277 规避 NULL deref）
-48ebaac36 297 → 2d133267c 307 → dc584d3ad 317
-d79978328  合并到336-EOL（4.14 最终版）
-994e30004  336精修：18个冲突文件三方解析 + cred/events 手工适配（实测可开机）
-49ee1a3d6  合并 OpenELA 337-357：1503 文件干净应用（SUBLEVEL=357）
-d5ea0a8c5  337-357 冲突解析：54 文件三方合并/手工缝合   ← 当前 HEAD 源状态
-```
-
-## 目录速览
-
-- `KernelSU/`：SukiSU-Ultra 内核态源（`drivers/kernelsu` 指向 `../KernelSU/kernel`）
-- `techpack/`：高通音频外设代码（三星魔改 Makefile，需 KCFLAGS 注入）
-- `drivers/net/wireless/broadcom/bcmdhd_101_16/`：Broadcom Wi-Fi
-- 4.14.336 的 `LINUX_VERSION_CODE`(266064) 数值溢出到 4.15 区间，涉及 `>= 4.15` 守卫的
-  外置驱动需按 4.14 语义评估（dhd 系列已处理）
-
-## 已知边界
-
-- kernel.org 4.14.y 已于 4.14.336（2024-01）EOL；OpenELA 的 linux-4.14.y 扩展维护也已于
-  2024-12 结束（4.14.357 为其最终版本），此后无后续官方补丁。
