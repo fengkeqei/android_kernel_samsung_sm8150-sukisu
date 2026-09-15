@@ -175,6 +175,15 @@ static __printf(1, 2) void verbose(const char *fmt, ...)
 	va_start(args, fmt);
 	log_len += vscnprintf(log_buf + log_len, log_size - log_len, fmt, args);
 	va_end(args);
+
+	/* Also dump to dmesg for debugging A15 netbpfload failures */
+	if (log_level > 0) {
+		char kbuf[256];
+		va_start(args, fmt);
+		vsnprintf(kbuf, sizeof(kbuf), fmt, args);
+		va_end(args);
+		pr_info("BPF_V: %s", kbuf);
+	}
 }
 
 /* string representation of 'enum bpf_reg_type' */
