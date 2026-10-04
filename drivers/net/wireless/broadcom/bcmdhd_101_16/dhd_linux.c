@@ -2147,6 +2147,19 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 #endif /* PASS_ALL_MCAST_PKTS */
 				/* restore pre-suspend setting for dtim_skip */
 				dhd_set_suspend_bcn_li_dtim(dhd, FALSE);
+#if defined(BUFFY_OPER_MODE_FIX)
+				/* BUFFY-FIX: re-assert full operating mode (80MHz, 2ss) after
+				 * resume. Firmware may have sent a 20MHz Operating Mode
+				 * Notification while the screen was off; APs that honour it
+				 * keep transmitting at 20MHz afterwards (RX stuck issue). */
+				{
+					u32 oper_mode_res = 0x112; /* 80MHz | 2ss<<4 | ENABLE */
+					if (dhd_iovar(dhd, 0, "oper_mode", (char *)&oper_mode_res,
+							sizeof(oper_mode_res), NULL, 0, TRUE) == BCME_OK) {
+						DHD_ERROR(("BUFFY: oper_mode re-asserted after resume\n"));
+					}
+				}
+#endif /* BUFFY_OPER_MODE_FIX */
 #if defined(DHD_USE_EARLYSUSPEND) || defined(DHD_USE_PM_SLEEP)
 #ifdef DHD_BCN_TIMEOUT_IN_SUSPEND
 				bcn_timeout = CUSTOM_BCN_TIMEOUT;
@@ -16053,6 +16066,20 @@ _dhd_apf_config_filter(struct net_device *ndev, uint32 filter_id, uint32 mode, u
 	u32 cmd_len, buf_len;
 	int ifidx, ret;
 	char cmd[] = "pkt_filter_enable";
+#if defined(BUFFY_APF_FIX)
+	/* BUFFY-FIX: the Android APF program is written for drop-on-match
+	 * semantics (match -> drop junk like mcast/bcast, no-match -> pass
+	 * data). mode value 0 == drop-on-match. Upstream wrote the global
+	 * dhd_master_mode (TRUE == forward-on-match) here instead, inverting
+	 * the semantics: whenever the APF filter got enabled during (early)
+	 * suspend -- including while in_suspend was stuck high -- firmware
+	 * discarded every unmatched unicast, i.e. ALL downlink data, while
+	 * forwarding the junk. Verified on-device: filter enabled + mode 0
+	 * passes a 20Mbps UDP flood; same + mode 1 drops ~77% of it. */
+	uint32 apf_mode = 0;
+#else
+	uint32 apf_mode = dhd_master_mode;
+#endif /* BUFFY_APF_FIX */
 
 	ifidx = dhd_net2idx(dhd, ndev);
 	if (ifidx == DHD_BAD_IF) {
@@ -16087,7 +16114,7 @@ _dhd_apf_config_filter(struct net_device *ndev, uint32 filter_id, uint32 mode, u
 		goto exit;
 	}
 
-	ret = dhd_wl_ioctl_set_intiovar(dhdp, "pkt_filter_mode", dhd_master_mode, WLC_SET_VAR,
+	ret = dhd_wl_ioctl_set_intiovar(dhdp, "pkt_filter_mode", apf_mode, WLC_SET_VAR,
 		TRUE, ifidx);
 	if (unlikely(ret)) {
 		DHD_ERROR(("%s: failed to set APF filter mode, id=%d, ret=%d\n", __FUNCTION__,
@@ -19303,7 +19330,7 @@ dhd_nla_put_sssr_dump_len(void *ndev, uint32 *arr_len)
 #endif /* DHD_SSSR_DUMP */
 
 uint32
-dhd_get_time_str_len()
+dhd_get_time_str_len(void)
 {
 	char *ts = NULL, time_str[128];
 

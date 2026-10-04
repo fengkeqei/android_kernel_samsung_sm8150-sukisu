@@ -4683,6 +4683,20 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	param_hdr.param_id = cfg_type;
 	param_hdr.param_size = sizeof(union afe_port_config);
 
+	if (cfg_type == AFE_PARAM_ID_SLIMBUS_CONFIG) {
+		pr_info("MICDBG %s: port 0x%x SLIMBUS cfg: dev_id %u bit_wd %u fmt %u num_ch %u rate %u shared_ch[%u %u %u %u]\n",
+			__func__, port_id,
+			afe_config->slim_sch.slimbus_dev_id,
+			afe_config->slim_sch.bit_width,
+			afe_config->slim_sch.data_format,
+			afe_config->slim_sch.num_channels,
+			afe_config->slim_sch.sample_rate,
+			afe_config->slim_sch.shared_ch_mapping[0],
+			afe_config->slim_sch.shared_ch_mapping[1],
+			afe_config->slim_sch.shared_ch_mapping[2],
+			afe_config->slim_sch.shared_ch_mapping[3]);
+	}
+
 	port_cfg = *afe_config;
 	if (((enc_cfg != NULL) || (dec_cfg != NULL)) &&
 	    (codec_format != ASM_MEDIA_FMT_NONE) &&

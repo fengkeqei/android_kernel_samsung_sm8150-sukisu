@@ -432,6 +432,14 @@ DHDCFLAGS += -DDHD_FW_NAME="\"bcmdhd_sta.bin\""
 DHDCFLAGS += -DDHD_NVRAM_NAME="\"nvram.txt\""
 DHDCFLAGS += -DDHD_CLM_NAME="\"bcmdhd_clm.blob\""
 
+# BUFFY-FIX: re-assert full operating mode before join / after resume so
+# APs honouring Operating Mode Notification don't keep us at 20MHz RX
+DHDCFLAGS += -DBUFFY_OPER_MODE_FIX
+# BUFFY-FIX: APF pkt_filter_mode must be drop-on-match (0) to match AOSP
+# program semantics; upstream passed dhd_master_mode (1) which inverted
+# the filter and discarded all downlink unicast during suspend
+DHDCFLAGS += -DBUFFY_APF_FIX
+
 # GN4 platform still disabled Lollipop features
 ifeq ($(filter y,$(CONFIG_MACH_UNIVERSAL5433) $(CONFIG_ARCH_APQ8084)),y)
 DHD_ANDROID_OFILES :=$(filter-out wl_cfgvendor.o,$(DHD_ANDROID_OFILES))

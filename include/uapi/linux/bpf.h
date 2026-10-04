@@ -93,6 +93,7 @@ enum bpf_cmd {
 	BPF_PROG_GET_FD_BY_ID,
 	BPF_MAP_GET_FD_BY_ID,
 	BPF_OBJ_GET_INFO_BY_FD,
+	BPF_PROG_QUERY,
 };
 
 enum bpf_map_type {
@@ -142,6 +143,12 @@ enum bpf_prog_type {
 	BPF_PROG_TYPE_LWT_XMIT,
 	BPF_PROG_TYPE_SOCK_OPS,
 	BPF_PROG_TYPE_SK_SKB,
+	/* placeholders to keep values aligned with modern UAPI (A15 netbpfload):
+	 * 15=CGROUP_DEVICE, 16=SK_MSG, 17=RAW_TRACEPOINT, 18=CGROUP_SOCK_ADDR */
+	BPF_PROG_TYPE_CGROUP_DEVICE,
+	BPF_PROG_TYPE_SK_MSG,
+	BPF_PROG_TYPE_RAW_TRACEPOINT,
+	BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
 };
 
 enum bpf_attach_type {
@@ -151,6 +158,39 @@ enum bpf_attach_type {
 	BPF_CGROUP_SOCK_OPS,
 	BPF_SK_SKB_STREAM_PARSER,
 	BPF_SK_SKB_STREAM_VERDICT,
+	/* Full modern UAPI list (kernel 6.1) — values MUST match what A15
+	 * userspace passes: sendmsg=12/13, recvmsg=17/18, getsockopt=19,
+	 * getpeername=27/28, getsockname=29/30, sock_destroy=32. */
+	BPF_CGROUP_DEVICE,
+	BPF_SK_MSG_VERDICT,
+	BPF_CGROUP_INET4_CONNECT,
+	BPF_CGROUP_INET6_CONNECT,
+	BPF_CGROUP_INET4_POST_BIND,
+	BPF_CGROUP_INET6_POST_BIND,
+	BPF_CGROUP_UDP4_SENDMSG,
+	BPF_CGROUP_UDP6_SENDMSG,
+	BPF_LIRC_MODE2,
+	BPF_FLOW_DISSECTOR,
+	BPF_CGROUP_SYSCTL,
+	BPF_CGROUP_UDP4_RECVMSG,
+	BPF_CGROUP_UDP6_RECVMSG,
+	BPF_CGROUP_GETSOCKOPT,
+	BPF_SETSOCKOPT,
+	BPF_TRACE_RAW_TP,
+	BPF_TRACE_FENTRY,
+	BPF_TRACE_FEXIT,
+	BPF_MODIFY_RETURN,
+	BPF_LSM_MAC,
+	BPF_TRACE_ITER,
+	BPF_CGROUP_INET4_GETPEERNAME,
+	BPF_CGROUP_INET6_GETPEERNAME,
+	BPF_CGROUP_INET4_GETSOCKNAME,
+	BPF_CGROUP_INET6_GETSOCKNAME,
+	BPF_XDP_DEVMAP,
+	BPF_CGROUP_INET_SOCK_DESTROY,
+	BPF_XDP_CPUMAP,
+	BPF_SK_LOOKUP,
+	BPF_XDP,
 	__MAX_BPF_ATTACH_TYPE
 };
 
@@ -300,6 +340,15 @@ union bpf_attr {
 		__u32		attach_type;
 		__u32		attach_flags;
 	};
+
+	struct { /* anonymous struct used by BPF_PROG_QUERY command */
+		__u32		target_fd;	/* container object to query */
+		__u32		attach_type;
+		__u32		query_flags;	/* BPF_F_QUERY_EFFECTIVE (not supported) */
+		__u32		attach_flags;	/* and flags of the attached program */
+		__aligned_u64	prog_ids;
+		__u32		prog_cnt;
+	} query;
 
 	struct { /* anonymous struct used by BPF_PROG_TEST_RUN command */
 		__u32		prog_fd;

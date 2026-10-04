@@ -478,3 +478,57 @@ int __cgroup_bpf_run_filter_sock_ops(struct sock *sk,
 	return ret == 1 ? 0 : -EPERM;
 }
 EXPORT_SYMBOL(__cgroup_bpf_run_filter_sock_ops);
+
+/*
+ * BPF_PROG_QUERY support (newer UAPI, required by A15 netd self-checks).
+ * Returns the attached prog id(s) for an attach type on a cgroup fd.
+ * Only single-attach (no BPF_F_ALLOW_MULTI) types exist in this tree, so
+ * there is at most one program per (cgroup, attach_type). BPF_F_QUERY_EFFECTIVE
+ * is rejected since the modern effective-prog propagation from upstream is
+ * not implemented here.
+ */
+extern struct mutex cgroup_mutex;	/* exported by kernel/cgroup/cgroup.c */
+
+int cgroup_bpf_query(const union bpf_attr *attr, union bpf_attr *unused_attr)
+{
+	enum bpf_attach_type type = attr->query.attach_type;
+	struct cgroup *cgrp;
+	struct bpf_prog_list *pl;
+	__u32 prog_id = 0;
+
+	if (attr->query.query_flags != 0)
+		return -EINVAL;		/* BPF_F_QUERY_EFFECTIVE not supported */
+	if (attr->query.attach_flags != 0)
+		return -EINVAL;
+	if (type < 0 || type >= MAX_BPF_ATTACH_TYPE)
+		return -EINVAL;
+	if (attr->query.prog_cnt < 1)
+		return -EINVAL;
+
+	cgrp = cgroup_get_from_fd(attr->query.target_fd);
+	if (IS_ERR(cgrp))
+		return PTR_ERR(cgrp);
+
+	mutex_lock(&cgroup_mutex);
+	pl = list_first_entry_or_null(&cgrp->bpf.progs[type],
+				      struct bpf_prog_list, node);
+	if (pl && pl->prog)
+		prog_id = pl->prog->aux->id;
+	mutex_unlock(&cgroup_mutex);
+
+	cgroup_put(cgrp);
+
+	if (!prog_id)
+		return -ENOENT;
+
+	/* Single-attach tree: at most one prog. Fill the user array slot 0.
+	 * prog_cnt stays as passed (netd reads it from its own struct). */
+	if (put_user(prog_id, (__u32 __user __force *)
+			       (unsigned long)attr->query.prog_ids))
+		return -EFAULT;
+
+	if (unused_attr)
+		unused_attr->query.prog_cnt = 1;
+
+	return 0;
+}

@@ -6076,8 +6076,64 @@ wl_cfg80211_connect(struct wiphy *wiphy, struct net_device *dev,
 			goto fail;
 		}
 
+		/* BUFFY-FIX v2: firmware derives the (Re)Association Request's
+		 * "Supported Operating Classes" (0x3b) current-class field from its
+		 * internal operating mode, which can stay stuck at 20MHz after a
+		 * wifi off/on or driver reload. An AP that honours it then keeps
+		 * transmitting to us at 20MHz (RX pinned at 144/72 Mbps) even though
+		 * we joined an 80MHz BSS and our TX runs at 80MHz/2ss.
+		 *
+		 * v1 keyed the fix off assoc_info.chanspecs[0], which can never hold
+		 * an 80MHz chanspec: wl_handle_assoc_hints() fills it from
+		 * sme->channel_hint via wl_freq_to_chanspec(), and that helper
+		 * returns WL_CHANSPEC_BW_20 for *every* sub-6GHz frequency
+		 * (wl_cfgscan.c), so the "BW >= 80" guard could not pass and the
+		 * fix was dead code (0 dmesg prints).
+		 *
+		 * v2 derives the target band straight from cfg80211's connect params
+		 * (sme->channel_hint / sme->channel, chanspec band as fallback) and
+		 * builds the operating-mode word itself. */
+		{
+			bool target_5g = false;
+			u32 oper_mode_fix;
+			s32 rxchain = 0;
+
+			if (sme->channel_hint) {
+				target_5g = (sme->channel_hint->center_freq > 4000);
+			} else if (sme->channel) {
+				target_5g = (sme->channel->center_freq > 4000);
+			} else if (assoc_info.chan_cnt > 0 && assoc_info.chanspecs[0]) {
+				target_5g = !CHSPEC_IS2G(assoc_info.chanspecs[0]);
+			}
+
+			if (target_5g) {
+				/* Nss 2 -> 1 in the operating-mode field (802.11ac 8.4.1.50);
+				 * 80MHz + Nss2 + ENABLE == 0x112. */
+				u32 nss = 1;
+				if ((wldev_iovar_getint(dev, "rxchain", &rxchain) == BCME_OK) &&
+					(rxchain == 3)) {
+					nss = 2;
+				}
+				oper_mode_fix = DOT11_OPER_MODE(0, nss, DOT11_OPER_MODE_80MHZ) |
+					(1 << 8); /* OPER_MODE_ENABLE */
+				if (wldev_iovar_setint(dev, "oper_mode",
+						(s32)oper_mode_fix) == BCME_OK) {
+					WL_ERR(("BUFFY: oper_mode 0x%x (80MHz nss=%u) set before join\n",
+						oper_mode_fix, nss));
+				} else {
+					WL_ERR(("BUFFY: oper_mode set failed\n"));
+				}
+			}
+		}
+
 		if ((err = wl_handle_join(cfg, dev, &assoc_info)) != BCME_OK) {
 			goto fail;
+		}
+		{
+			s32 om = 0;
+			if (wldev_iovar_getint(dev, "oper_mode", &om) == BCME_OK) {
+				WL_ERR(("BUFFY: oper_mode after join = 0x%x\n", (u32)om));
+			}
 		}
 	}
 	/* Store the minium idx expected */
@@ -13178,6 +13234,54 @@ wl_bss_connect_done(struct bcm_cfg80211 *cfg, struct net_device *ndev,
 			wl_update_pmklist(ndev, cfg->pmk_list, err);
 		}
 		wl_set_drv_status(cfg, CONNECTED, ndev);
+
+#if defined(BUFFY_OPER_MODE_FIX)
+		/* BUFFY-FIX v3b: post-join operating-mode *transition*.
+		 *
+		 * v3 (single set) proved insufficient: when the pre-join (v2) set
+		 * is still in effect, firmware already holds 80MHz/nss2 at join
+		 * done, so setting 0x112 again is a no-op and no Operating Mode
+		 * Notification goes out. This AP family ignores the association
+		 * IEs for downlink sizing and honours only OMN transitions,
+		 * defaulting to 20MHz until one arrives (RX pinned at 144 Mbps
+		 * reading / ~23 Mbps LAN, while TX runs 80MHz).
+		 *
+		 * Verified on-device: a runtime 0x110 -> 0x112 transition (manual
+		 * `wl_io set oper_mode int 274` on a link stuck at 0x110) raised
+		 * LAN RX 23 -> 229 Mbps within the same connection.
+		 *
+		 * So always create the transition here: drop to 20MHz/nss1, brief
+		 * pause, then re-assert 80MHz/nss2 to force the OMN. Transient
+		 * narrow-mode window is ~30ms. VHT-only BSSs ignore OMN (harmless).
+		 */
+		{
+			s32 chanspec_now = 0;
+			if (wldev_iovar_getint(ndev, "chanspec", &chanspec_now) == BCME_OK &&
+				chanspec_now && !CHSPEC_IS2G((chanspec_t)chanspec_now)) {
+				u32 nss_v3 = 1;
+				s32 rxchain_v3 = 0;
+				u32 oper_mode_v3;
+				if ((wldev_iovar_getint(ndev, "rxchain", &rxchain_v3) == BCME_OK) &&
+					(rxchain_v3 == 3)) {
+					nss_v3 = 2;
+				}
+				oper_mode_v3 = DOT11_OPER_MODE(0, nss_v3, DOT11_OPER_MODE_80MHZ) |
+					(1 << 8); /* OPER_MODE_ENABLE */
+				/* step 1: park at 20MHz/nss1 (transition source) */
+				(void)wldev_iovar_setint(ndev, "oper_mode",
+					(s32)DOT11_OPER_MODE(0, 1, DOT11_OPER_MODE_20MHZ) | (1 << 8));
+				msleep(30);
+				/* step 2: re-assert 80MHz -> firmware emits OMN */
+				if (wldev_iovar_setint(ndev, "oper_mode",
+						(s32)oper_mode_v3) == BCME_OK) {
+					WL_ERR(("BUFFY: oper_mode 0x112 re-asserted after join done (chanspec 0x%x)\n",
+						(u32)chanspec_now));
+				} else {
+					WL_ERR(("BUFFY: post-join oper_mode set failed\n"));
+				}
+			}
+		}
+#endif /* BUFFY_OPER_MODE_FIX */
 
 		if (wl_cfg80211_verify_bss(cfg, ndev, &bss) != true) {
 			/* If bss entry is not available in the cfg80211 bss cache

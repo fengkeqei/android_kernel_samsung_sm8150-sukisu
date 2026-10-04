@@ -2426,6 +2426,18 @@ static int msm_dai_q6_slim_bus_hw_params(struct snd_pcm_hw_params *params,
 	dai_data->port_config.slim_sch.sample_rate = dai_data->rate;
 	dai_data->port_config.slim_sch.num_channels = dai_data->channels;
 
+	pr_info("MICDBG %s: dai id 0x%x stream %d slimbus_dev_id[%hu] bit_wd[%hu] format[%hu] num_ch %hu shared_ch[%hu %hu %hu %hu] rate %d\n",
+		__func__, dai->id, stream,
+		dai_data->port_config.slim_sch.slimbus_dev_id,
+		dai_data->port_config.slim_sch.bit_width,
+		dai_data->port_config.slim_sch.data_format,
+		dai_data->port_config.slim_sch.num_channels,
+		dai_data->port_config.slim_sch.shared_ch_mapping[0],
+		dai_data->port_config.slim_sch.shared_ch_mapping[1],
+		dai_data->port_config.slim_sch.shared_ch_mapping[2],
+		dai_data->port_config.slim_sch.shared_ch_mapping[3],
+		dai_data->rate);
+
 	dev_dbg(dai->dev, "%s:slimbus_dev_id[%hu] bit_wd[%hu] format[%hu]\n"
 		"num_channel %hu  shared_ch_mapping[0]  %hu\n"
 		"slave_port_mapping[1]  %hu slave_port_mapping[2]  %hu\n"
@@ -2773,6 +2785,13 @@ static int msm_dai_q6_set_channel_map(struct snd_soc_dai *dai,
 			pr_err("%s: invalid tx num %d\n", __func__, tx_num);
 			return -EINVAL;
 		}
+
+		pr_info("MICDBG %s: SLIMBUS TX dai id 0x%x tx_num %u slots[%u %u %u %u]\n",
+			__func__, dai->id, tx_num,
+			tx_num > 0 ? tx_slot[0] : 0,
+			tx_num > 1 ? tx_slot[1] : 0,
+			tx_num > 2 ? tx_slot[2] : 0,
+			tx_num > 3 ? tx_slot[3] : 0);
 
 		for (i = 0; i < tx_num; i++) {
 			dai_data->port_config.slim_sch.shared_ch_mapping[i] =

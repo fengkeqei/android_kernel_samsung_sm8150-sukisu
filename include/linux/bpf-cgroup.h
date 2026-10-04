@@ -63,6 +63,8 @@ int __cgroup_bpf_run_filter_sock_ops(struct sock *sk,
 				     struct bpf_sock_ops_kern *sock_ops,
 				     enum bpf_attach_type type);
 
+int cgroup_bpf_query(const union bpf_attr *attr, union bpf_attr *unused_attr);
+
 /* Wrappers for __cgroup_bpf_run_filter_skb() guarded by cgroup_bpf_enabled. */
 #define BPF_CGROUP_RUN_PROG_INET_INGRESS(sk, skb)			      \
 ({									      \

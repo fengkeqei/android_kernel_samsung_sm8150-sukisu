@@ -366,6 +366,9 @@ int wcd9xxx_cfg_slim_sch_tx(struct wcd9xxx *wcd9xxx,
 		if (ch_cnt < size) {
 			ch_h[ch_cnt] = tx->ch_h;
 			ch_cnt++;
+			pr_info("MICDBG %s: tx port %d shift %d ch_num %d ch_h %d sph %d\n",
+				__func__, tx->port, tx->shift, tx->ch_num,
+				tx->ch_h, tx->sph);
 		} else {
 			pr_err("%s: allocated channel number %u is out of max rangae %d\n",
 			       __func__, ch_cnt,
@@ -390,8 +393,8 @@ int wcd9xxx_cfg_slim_sch_tx(struct wcd9xxx *wcd9xxx,
 		goto err;
 	}
 
-	pr_debug("%s: ch_cnt[%d] rate[%d] bitwidth[%u]\n", __func__, ch_cnt,
-		 rate, bit_width);
+	pr_info("MICDBG %s: defined ch_cnt[%d] rate[%d] bitwidth[%u] grph[%d] payload 0x%x\n",
+		__func__, ch_cnt, rate, bit_width, *grph, payload);
 	list_for_each_entry(tx, wcd9xxx_ch_list, list) {
 		codec_port = tx->port;
 		pr_debug("%s: codec_port %d tx 0x%p, payload 0x%x\n",
@@ -437,14 +440,30 @@ int wcd9xxx_cfg_slim_sch_tx(struct wcd9xxx *wcd9xxx,
 			       __func__, ret);
 			goto err;
 		}
-	}
-	/* slim_control_ch */
+	}	/* slim_control_ch */
 	ret = slim_control_ch(wcd9xxx->slim, *grph, SLIM_CH_ACTIVATE,
 			      true);
 	if (ret < 0) {
 		pr_err("%s: slim_control_ch failed ret[%d]\n",
-			__func__, ret);
+		       __func__, ret);
 		goto err;
+	}
+	pr_info("MICDBG %s: TX channels ACTIVE grph=%d\n", __func__, *grph);
+	{
+		u16 p;
+		for (p = 0; p < 16; p++) {
+			int v0 = wcd9xxx_interface_reg_read(wcd9xxx,
+					SB_PGD_TX_PORT_MULTI_CHANNEL_0(p));
+			int v1 = wcd9xxx_interface_reg_read(wcd9xxx,
+					SB_PGD_TX_PORT_MULTI_CHANNEL_1(p));
+			int vcfg = wcd9xxx_interface_reg_read(wcd9xxx,
+					SB_PGD_PORT_CFG_BYTE_ADDR(
+					sh_ch.port_tx_cfg_reg_base, p));
+			int vur = wcd9xxx_interface_reg_read(wcd9xxx,
+					SB_PGD_PORT_TX_OR_UR_CFG(p));
+			pr_info("MICDBG %s: TXPORT[%d] MC0=0x%02x MC1=0x%02x CFG=0x%02x ORUR=0x%02x\n",
+				__func__, p, v0, v1, vcfg, vur);
+		}
 	}
 	return 0;
 err:
